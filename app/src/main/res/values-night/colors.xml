@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#1F1F1F</color>
+    <color name="colorPrimaryDark">#000</color>
+    <color name="colorAccent">#BA275E</color>
+    <color name="navigationBarColor">#000001</color>
+
+    <color name="navIconTint">@color/colorAccent</color>
+    <color name="navTextColor">@android:color/white</color>
+    <color name="navBackground">#121212</color>
+    <color name="cardBackground">#1D1D1D</color>
+    <color name="background">#121212</color>
+    <color name="contrastTextColor">#DBFFFFFF</color>
+    <color name="lowContrastTextColor">#99FFFFFF</color>
+    <color name="blackWhite">#DBFFFFFF</color>
+    <color name="dialogBackground">@color/cardBackground</color>
+</resources>

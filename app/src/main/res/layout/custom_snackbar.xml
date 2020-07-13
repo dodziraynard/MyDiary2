@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/background"
+    android:orientation="horizontal">
+
+    <ImageButton
+        android:id="@+id/record_attachment"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="5dp"
+        android:backgroundTint="@color/cardBackground"
+        android:contentDescription="@string/attachment_an_audio_to_note"
+        android:scaleType="fitXY"
+        android:tint="@color/contrastTextColor"
+        app:layout_constraintEnd_toStartOf="@+id/paint_attachment"
+        app:layout_constraintStart_toEndOf="@+id/image_attachment"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_mic" />
+
+    <ImageButton
+        android:id="@+id/image_attachment"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="5dp"
+        android:backgroundTint="@color/cardBackground"
+        android:contentDescription="@string/attach_an_image_to_the_image"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_image"
+        android:tint="@color/contrastTextColor"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@drawable/ic_image"
+        tools:srcCompat="@drawable/ic_image" />
+
+    <ImageButton
+        android:id="@+id/paint_attachment"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="15dp"
+        android:backgroundTint="@color/cardBackground"
+        android:contentDescription="@string/add_a_drawing_to_note"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_brush"
+        android:tint="@color/contrastTextColor"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@drawable/ic_brush" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

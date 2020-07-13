@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ds">
+        <attr name="contrastTextColor" format="color"/>
+        <attr name="cardBackground" format="color"/>
+
+        <attr name="colorPrimary" format="color"/>
+        <attr name="colorPrimaryDark" format="color"/>
+        <attr name="colorAccent" format="color"/>
+        <attr name="navIconTint" format="color"/>
+        <attr name="navTextColor" format="color"/>
+        <attr name="navBackground" format="color"/>
+    </declare-styleable>
+
+</resources>

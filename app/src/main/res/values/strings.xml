@@ -1,0 +1,43 @@
+<resources>
+    <string name="app_name">My Diary</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_protect">Protect</string>
+    <string name="menu_export">Export</string>
+    <string name="menu_reminder">Reminder</string>
+    <string name="menu_feedback">Feedback</string>
+    <string name="menu_share">Share</string>
+    <string name="app_name_version">My Diary v1.0</string>
+    <string name="string_options">Options</string>
+    <string name="string_view">View</string>
+    <string name="string_share">Share</string>
+    <string name="string_delete">Delete</string>
+    <string name="attachment_an_audio_to_note">Attachment an audio to note</string>
+    <string name="attach_an_image_to_the_image">Attach an image to the image</string>
+    <string name="add_a_drawing_to_note">Add a drawing to note</string>
+    <string name="attachment">Attachment</string>
+    <string name="communicate">Communicate</string>
+    <string name="note_description">Note description</string>
+    <string name="string_cancel">CANCEL</string>
+    <string name="string_yes">YES</string>
+    <string name="string_choose_color">Choose color</string>
+    <string name="string_clear_canvas">Clear Canvas</string>
+    <string name="string_clear_canvas_confirm">Are you sure you want to clear the canvas?</string>
+    <string name="_5">5</string>
+    <string name="string_brush_size">Brush Size</string>
+    <string name="string_canvas">Canvas</string>
+    <string name="string_ok">OK</string>
+    <string name="string_edit_note">Edit Note</string>
+    <string name="title_activity_image_view">Image View</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="delete_image">Delete Image</string>
+    <string name="string_delete_perm">Are you sure you want to permanently delete?</string>
+    <string name="string_select_picture">Select Picture</string>
+
+</resources>
