@@ -3,6 +3,7 @@ package com.idea.mydiary.models;
 import android.os.Environment;
 
 import com.idea.mydiary.Utils;
+import com.idea.mydiary.types.MediaType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ public class DataManager {
     }
 
     private void initializeExampleNotes() {
-        for (int i = 0; i < 20; i++) {
+        for (int i = 1; i <= 20; i++) {
             String title = "Note " + i;
             String text = "Some really realy long text as the content of the note";
             Note note = new Note(title, 1322018752992l, text);

@@ -12,10 +12,6 @@
             android:id="@+id/nav_export"
             android:icon="@drawable/ic_archive"
             android:title="@string/menu_export" />
-        <item
-            android:id="@+id/nav_reminder"
-            android:icon="@drawable/ic_notifications"
-            android:title="@string/menu_reminder" />
     </group>
 
     <item android:title="@string/communicate">
@@ -29,6 +25,10 @@
                 android:id="@+id/nav_feedback"
                 android:icon="@drawable/ic_message"
                 android:title="@string/menu_feedback" />
+            <item
+                android:id="@+id/nav_account"
+                android:icon="@drawable/ic_person"
+                android:title="My Account" />
         </menu>
     </item>
 

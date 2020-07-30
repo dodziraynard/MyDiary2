@@ -13,7 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.idea.mydiary.models.Media;
-import com.idea.mydiary.models.MediaType;
+import com.idea.mydiary.types.MediaType;
 import com.idea.mydiary.R;
 
 import java.lang.ref.WeakReference;
@@ -32,8 +32,8 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.ViewHolder> 
     }
 
     public interface OnItemClickListener {
-        void onImageButtonClickListener(int position);
-        void onAudioButtonClickListener(String url, int position);
+        void onImageButtonClickListener(Media media);
+        void onAudioButtonClickListener(Media media);
     }
 
     public void setOnImageButtonClickListener(OnItemClickListener listener){
@@ -50,7 +50,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.ViewHolder> 
     @Override
     public void onBindViewHolder(@NonNull final MediaAdapter.ViewHolder holder, int position) {
         Media media = mMediaList.get(position);
-        if (media.getMediaType() == MediaType.IMAGE) {
+        if (media.getMediaTypeEnum() == MediaType.IMAGE) {
             new DecodeFileTask(holder).execute(media);
         } else {
             holder.mImageButton.setImageResource(R.drawable.ic_music_note);
@@ -59,7 +59,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.ViewHolder> 
     }
 
     public void setMediaList(List<Media> mediaList){
-        this.mMediaList = mMediaList;
+        this.mMediaList = mediaList;
         notifyDataSetChanged();
     }
 
@@ -81,10 +81,10 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.ViewHolder> 
                 public void onClick(View v) {
                     mMedia = mMediaList.get(getLayoutPosition());
                     if(listener != null){
-                        if(mMedia.getMediaType() == MediaType.IMAGE){
-                            listener.onImageButtonClickListener(getLayoutPosition());
+                        if(mMedia.getMediaTypeEnum() == MediaType.IMAGE){
+                            listener.onImageButtonClickListener(mMedia);
                         } else{
-                            listener.onAudioButtonClickListener(mMedia.getUrl(), getLayoutPosition());
+                            listener.onAudioButtonClickListener(mMedia);
                         }
                     }
                 }
@@ -109,7 +109,11 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.ViewHolder> 
         @Override
         protected void onPostExecute(Bitmap bitmap) {
             ViewHolder holder = mViewHolderWeakReference.get();
-            holder.mImageButton.setImageBitmap(bitmap);
+            try {
+                holder.mImageButton.setImageBitmap(bitmap);
+            } catch (NullPointerException e){
+                e.printStackTrace();
+            }
         }
     }
 }

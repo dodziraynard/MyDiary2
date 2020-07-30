@@ -15,14 +15,14 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import com.idea.mydiary.models.PlayerState;
-import com.idea.mydiary.NewNoteActivity;
+import com.idea.mydiary.activities.NewNoteActivity;
+import com.idea.mydiary.types.PlayerState;
 
 import java.io.IOException;
 
-import static com.idea.mydiary.NewNoteActivity.AUDIO_URI;
-import static com.idea.mydiary.NewNoteActivity.MEDIA_SERVICE_INFO;
-import static com.idea.mydiary.NewNoteActivity.SEEK_POSITION;
+import static com.idea.mydiary.activities.NewNoteActivity.AUDIO_URI;
+import static com.idea.mydiary.activities.NewNoteActivity.MEDIA_SERVICE_INFO;
+import static com.idea.mydiary.activities.NewNoteActivity.SEEK_POSITION;
 
 
 public class MediaService extends IntentService implements MediaPlayer.OnCompletionListener,
@@ -56,16 +56,19 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
         mMediaPlayer.reset();
 
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        try {
-            mMediaPlayer.setDataSource(mAudioFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-            stopSelf();
+
+        if(mAudioFile != null && !mAudioFile.isEmpty()){
+            try {
+                mMediaPlayer.setDataSource(mAudioFile);
+            } catch (IOException | NullPointerException e) {
+                e.printStackTrace();
+                stopSelf();
+            }
+            mMediaPlayer.prepareAsync();
         }
-        mMediaPlayer.prepareAsync();
     }
 
-    private int resumePosition;
+    private int resumePosition = 0;
 
     private void playMedia() {
         if (!mMediaPlayer.isPlaying()) {
@@ -146,6 +149,13 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
         }
     };
 
+    private BroadcastReceiver stopAudio = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            stopMedia();
+        }
+    };
+
     // Resume audio
     private BroadcastReceiver resumeAudio = new BroadcastReceiver() {
         @Override
@@ -157,10 +167,9 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
     private BroadcastReceiver seekAudio = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-//            int position = new StorageUtil(getApplicationContext()).getSeekPosition();
             int position = intent.getIntExtra(SEEK_POSITION, -1);
-            Log.d("HRD", String.valueOf(position));
-            mMediaPlayer.seekTo(position);
+            resumePosition = position*1000;
+            mMediaPlayer.seekTo(resumePosition);
         }
     };
 
@@ -170,11 +179,13 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
         IntentFilter filterPause = new IntentFilter(NewNoteActivity.Broadcast_PAUSE_AUDIO);
         IntentFilter filterResume = new IntentFilter(NewNoteActivity.Broadcast_RESUME_AUDIO);
         IntentFilter filterSeek = new IntentFilter(NewNoteActivity.Broadcast_SEEK_AUDIO);
+        IntentFilter filterStop = new IntentFilter(NewNoteActivity.Broadcast_STOP_AUDIO);
 
         registerReceiver(playNewAudio, filterPlay);
         registerReceiver(resumeAudio, filterResume);
         registerReceiver(pauseAudio, filterPause);
         registerReceiver(seekAudio, filterSeek);
+        registerReceiver(stopAudio, filterStop);
         registerReceiver(becomingNoisyReceiver, intentFilter);
     }
 
@@ -224,14 +235,14 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
 
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
-        while(mMediaPlayer != null){
+        while (mMediaPlayer != null) {
             try {
-                int pos = mMediaPlayer.getCurrentPosition() / 1000 +1;
+                int pos = mMediaPlayer.getCurrentPosition() / 1000 + 1;
 
                 if (mMediaPlayer.isPlaying()) {
                     sendMediaPositionToActivity(pos);
                 }
-            } catch (IllegalStateException e){
+            } catch (IllegalStateException e) {
                 e.printStackTrace();
             }
 
@@ -244,9 +255,9 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
     }
 
     private void sendPlayerStateToActivity(PlayerState playerState) {
-        if(mMediaPlayer == null) return;
+        if (mMediaPlayer == null) return;
         mSendMessageIntent.putExtra(PLAYER_STATE, playerState.name());
-        mSendMessageIntent.putExtra(MEDIA_DURATION, mMediaPlayer.getDuration()/ 1000);
+        mSendMessageIntent.putExtra(MEDIA_DURATION, mMediaPlayer.getDuration() / 1000);
         sendBroadcast(mSendMessageIntent);
     }
 
@@ -258,7 +269,6 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        Log.d("HRD", "onCompletion");
         stopMedia();
         stopSelf();
     }
@@ -305,8 +315,6 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         mAudioFile = intent.getStringExtra(AUDIO_URI);
-        Log.d("HRD", "OnStartCommand. mAudioFile:" + mAudioFile);
-
         // Intent for sending message to the activity
         mSendMessageIntent = new Intent();
         mSendMessageIntent.setAction(MEDIA_SERVICE_INFO);
@@ -315,8 +323,8 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
             //Could not gain focus
             stopSelf();
         }
-        if(mMediaPlayer == null)
-        initMediaPlayer();
+        if (mMediaPlayer == null)
+            initMediaPlayer();
 
         return super.onStartCommand(intent, flags, startId);
     }
@@ -357,7 +365,6 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
 
     @Override
     public void onSeekComplete(MediaPlayer mp) {
-
     }
 
     public class LocalBinder extends Binder {

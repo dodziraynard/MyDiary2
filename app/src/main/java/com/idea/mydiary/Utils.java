@@ -1,14 +1,22 @@
 package com.idea.mydiary;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.StrictMode;
-import android.util.Log;
+import android.provider.MediaStore;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
+import androidx.databinding.library.baseAdapters.BuildConfig;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,8 +25,14 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 
 public class Utils {
-    public static final File APP_FOLDER = new File(
-            Environment.getExternalStorageDirectory().toString() + "/MyDiary");
+    private final File APP_FOLDER;
+    //    public static File APP_FOLDER = new File(
+//            Environment.getExternalStorageDirectory().toString() + "/MyDiary");
+
+    public Utils(Context context) {
+        APP_FOLDER = new File(
+                context.getFilesDir().toString() + "/MyDiary");
+    }
 
     public static <T> boolean contains(final T[] array, final T v) {
         if (v == null) {
@@ -32,6 +46,10 @@ public class Utils {
         }
 
         return false;
+    }
+
+    public File getAppFolder() {
+        return APP_FOLDER;
     }
 
     public static void copyFile(File sourceFile, File destFile) throws IOException {
@@ -61,18 +79,18 @@ public class Utils {
         }
     }
 
-    public static boolean deleteMyFile(Context context, String url){
+    public static boolean deleteMyFile(Context context, String url) {
         File file = new File(url);
         boolean deleted = file.delete();
-        if(deleted) return  true;
-        if(file.exists()){
+        if (deleted) return true;
+        if (file.exists()) {
             try {
                 boolean d = file.getCanonicalFile().delete();
-                if(d) return  true;
-            } catch (IOException e) {
+                if (d) return true;
+            } catch (IOException | RuntimeException e) {
                 e.printStackTrace();
             }
-            if(file.exists()){
+            if (file.exists()) {
                 context.deleteFile(file.getName());
             }
         }
@@ -92,23 +110,24 @@ public class Utils {
         return sb.toString();
     }
 
+    public static void hideKeyboard(Activity activity) {
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        //Find the currently focused view, so we can grab the correct window token from it.
+        View view = activity.getCurrentFocus();
+        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        if (view == null) {
+            view = new View(activity);
+        }
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
     public static class AudioRecorder {
 
         final MediaRecorder recorder = new MediaRecorder();
         public final String fileName;
 
         public AudioRecorder(String fileName) {
-            this.fileName = sanitizePath(fileName);
-        }
-
-        private String sanitizePath(String fileName) {
-            if (!fileName.startsWith("/")) {
-                fileName = "/" + fileName;
-            }
-            if (!fileName.contains(".")) {
-                fileName += ".mp3";
-            }
-            return APP_FOLDER.getAbsolutePath() + fileName;
+            this.fileName = fileName;
         }
 
         public void start() throws IOException {
@@ -153,7 +172,27 @@ public class Utils {
             mp.setDataSource(path);
             mp.prepare();
             mp.start();
-//            mp.setVolume(10, 10);
         }
+    }
+
+    public static String getPathFromUri(Context context, Uri uri) {
+        if (uri == null) {
+            Toast.makeText(context, "No image selected", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+        // try to retrieve the image from the media store first
+        // this will only work for images selected from gallery
+        String[] projection = {MediaStore.Images.Media.DATA};
+        Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null);
+        if (cursor != null) {
+            int column_index = cursor
+                    .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            String path = cursor.getString(column_index);
+            cursor.close();
+            return path;
+        }
+        // this is our fallback here
+        return uri.getPath();
     }
 }

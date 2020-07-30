@@ -1,0 +1,25 @@
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:theme="@style/AlertDialogStyle">
+
+    <PreferenceCategory app:title="Security">
+        <CheckBoxPreference
+            app:key="protect"
+            app:summary="Request authentication to access notes"
+            app:title="Protect"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Font Size">
+        <ListPreference
+            android:dialogTitle="Choose font size"
+            android:entries="@array/pref_size_entries"
+            android:entryValues="@array/pref_size_entries_values"
+            android:key="fontSize"
+            android:showDividers="beginning"
+            android:summary="%s"
+            android:title="Reading font size"
+            app:dialogTitle="Choose font size" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

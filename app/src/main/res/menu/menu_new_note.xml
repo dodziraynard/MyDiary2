@@ -9,13 +9,12 @@
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_save"
-        android:icon="@android:drawable/ic_menu_save"
+        android:icon="@drawable/ic_save"
         android:title="Save"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/menu_cancel"
-        android:icon="@android:drawable/ic_menu_close_clear_cancel"
-        android:title="@android:string/cancel"
-        android:visible="true"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/menu_delete"
+        android:icon="@drawable/ic_delete"
+        android:title="@string/string_delete"
+        android:visible="true" />
 </menu>

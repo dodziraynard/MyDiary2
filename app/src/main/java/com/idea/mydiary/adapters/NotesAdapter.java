@@ -1,7 +1,12 @@
 package com.idea.mydiary.adapters;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,35 +15,53 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.idea.mydiary.NewNoteActivity;
+import com.google.android.material.snackbar.Snackbar;
 import com.idea.mydiary.R;
+import com.idea.mydiary.activities.NoteViewActivity;
 import com.idea.mydiary.models.Note;
 
 import java.util.List;
 
-import static com.idea.mydiary.MainActivity.SELECTED_NOTE_ID;
+import static com.idea.mydiary.activities.MainActivity.SELECTED_NOTE_ID;
 
-public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> implements View.OnCreateContextMenuListener {
+public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>
+        implements View.OnCreateContextMenuListener {
 
-    private static final int MENU_ORDER_0 = 0;
-    private static final int MENU_ORDER_1 = 1;
-    private static final int MENU_ORDER_2 = 2;
+    public static final int MENU_EDIT = 0;
+    public static final int MENU_EXPORT_PDF = 1;
+    public static final int MENU_DELETE = 2;
     private final Context mContext;
     private final LayoutInflater mLayoutInflater;
-    private final List<Note> mNotes;
+    private List<Note> mNotes;
     private long adapterPosition = -1;
+    private Note mRecentlyDeletedItem;
+    private int mRecentlyDeletedItemPosition;
+    private final Activity mActivity;
+    private OnDeleteListener listener;
+    private boolean mCanDelete = true;
 
-    public NotesAdapter(Context context, List<Note> notes) {
+    public NotesAdapter(Context context, Activity activity) {
         mContext = context;
-        mNotes = notes;
         mLayoutInflater = LayoutInflater.from(mContext);
+        mActivity = activity;
     }
+
+    public interface OnDeleteListener {
+        void deleteNote(Note note);
+    }
+
+    public void setOnNoteDeleteListener(OnDeleteListener listener) {
+        this.listener = listener;
+    }
+
 
     @NonNull
     @Override
-    public NotesAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View itemView = mLayoutInflater.inflate(R.layout.note_item, parent, false);
         return new ViewHolder(itemView);
     }
@@ -54,25 +77,59 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
 
         holder.mNoteCard.setOnCreateContextMenuListener(this);
 
-        holder.mNoteCard.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                setAdapterPosition(holder.getAdapterPosition());
-                return false;
-            }
+        holder.mNoteCard.setOnLongClickListener(v -> {
+            setAdapterPosition(holder.getLayoutPosition());
+            return false;
         });
     }
 
     @Override
     public int getItemCount() {
+        if (mNotes == null) return 0;
         return mNotes.size();
+    }
+
+    public Context getContext() {
+        return mContext;
+    }
+
+    public void deleteItem(int position) {
+        mRecentlyDeletedItem = mNotes.get(position);
+        mRecentlyDeletedItemPosition = position;
+        mNotes.remove(position);
+        notifyItemRemoved(position);
+        showUndoSnackbar();
+
+        Log.d("HRD", String.valueOf(position));
+    }
+
+    private void showUndoSnackbar() {
+        Snackbar snackbar = Snackbar.make(mActivity.findViewById(android.R.id.content), R.string.string_note_deleted,
+                Snackbar.LENGTH_LONG);
+        snackbar.setAction(R.string.snack_bar_undo, v -> undoDelete());
+        snackbar.addCallback(new Snackbar.Callback() {
+            @Override
+            public void onDismissed(Snackbar transientBottomBar, int event) {
+                super.onDismissed(transientBottomBar, event);
+                if(mCanDelete){
+                    listener.deleteNote(mRecentlyDeletedItem);
+                }
+            }
+        });
+        snackbar.show();
+    }
+
+    private void undoDelete() {
+        mCanDelete = false;
+        mNotes.add(mRecentlyDeletedItemPosition,
+                mRecentlyDeletedItem);
+        notifyItemInserted(mRecentlyDeletedItemPosition);
     }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        menu.add(0, v.getId(), MENU_ORDER_0, mContext.getString(R.string.string_view));
-        menu.add(0, v.getId(), MENU_ORDER_1, mContext.getString(R.string.string_share));
-        menu.add(0, v.getId(), MENU_ORDER_2, mContext.getString(R.string.string_delete));
+        menu.add(0, v.getId(), MENU_EDIT, mContext.getString(R.string.string_edit));
+        menu.add(0, v.getId(), MENU_EXPORT_PDF, mContext.getString(R.string.export_pdf));
     }
 
     @Override
@@ -83,6 +140,15 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
 
     public void setAdapterPosition(long adapterPosition) {
         this.adapterPosition = adapterPosition;
+    }
+
+    public void setNotes(List<Note> notes, long removedPosition) {
+        this.mNotes = notes;
+        if (removedPosition > -1) {
+            notifyItemRemoved((int) removedPosition);
+        } else {
+            notifyDataSetChanged();
+        }
     }
 
     public long getAdapterPosition() {
@@ -107,14 +173,89 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
             mText = itemView.findViewById(R.id.textViewNoteText);
             mNoteCard = itemView.findViewById(R.id.note_card);
 
-            mNoteCard.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                Intent intent = new Intent(mContext, NewNoteActivity.class);
-                intent.putExtra(SELECTED_NOTE_ID, getAdapterPosition());
+            mNoteCard.setOnClickListener((View v) -> {
+                Intent intent = new Intent(mContext, NoteViewActivity.class);
+                intent.putExtra(SELECTED_NOTE_ID, mNotes.get(getLayoutPosition()).getId());
                 mContext.startActivity(intent);
+            });
+        }
+    }
+
+    public static class SwipeToDeleteCallback extends ItemTouchHelper.SimpleCallback {
+
+        private NotesAdapter mAdapter;
+        private Drawable icon;
+        private final ColorDrawable background;
+
+
+        public SwipeToDeleteCallback(NotesAdapter adapter) {
+            super(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
+            mAdapter = adapter;
+
+            icon = ContextCompat.getDrawable(mAdapter.getContext(),
+                    R.drawable.ic_delete_white);
+            background = new ColorDrawable(ContextCompat.getColor(mAdapter.getContext(), R.color.error));
+        }
+
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView,
+                              @NonNull RecyclerView.ViewHolder viewHolder,
+                              @NonNull RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+            int position = viewHolder.getLayoutPosition();
+            mAdapter.deleteItem(position);
+        }
+
+        @Override
+        public void onChildDraw(Canvas c, RecyclerView recyclerView,
+                                RecyclerView.ViewHolder viewHolder,
+                                float dX, float dY, int actionState, boolean isCurrentlyActive) {
+            super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+
+            View itemView = viewHolder.itemView;
+            int backgroundCornerOffset = 20;
+            if (dX > 0) { // Swiping to the right
+                background.setBounds(itemView.getLeft(), itemView.getTop(),
+                        itemView.getLeft() + ((int) dX) + backgroundCornerOffset,
+                        itemView.getBottom());
+
+            } else if (dX < 0) { // Swiping to the left
+                background.setBounds(itemView.getRight() + ((int) dX) - backgroundCornerOffset,
+                        itemView.getTop(), itemView.getRight(), itemView.getBottom());
+            } else { // view is unSwiped
+                background.setBounds(0, 0, 0, 0);
             }
-        });
+            background.draw(c);
+
+            int iconMargin = (itemView.getHeight() - icon.getIntrinsicHeight()) / 2;
+            int iconTop = itemView.getTop() + (itemView.getHeight() - icon.getIntrinsicHeight()) / 2;
+            int iconBottom = iconTop + icon.getIntrinsicHeight();
+
+            if (dX > 0) { // Swiping to the right
+                int iconLeft = itemView.getLeft() + iconMargin + icon.getIntrinsicWidth();
+                int iconRight = itemView.getLeft() + iconMargin;
+                icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
+
+                background.setBounds(itemView.getLeft(), itemView.getTop(),
+                        itemView.getLeft() + ((int) dX) + backgroundCornerOffset,
+                        itemView.getBottom());
+            } else if (dX < 0) { // Swiping to the left
+                int iconLeft = itemView.getRight() - iconMargin - icon.getIntrinsicWidth();
+                int iconRight = itemView.getRight() - iconMargin;
+                icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
+
+                background.setBounds(itemView.getRight() + ((int) dX) - backgroundCornerOffset,
+                        itemView.getTop(), itemView.getRight(), itemView.getBottom());
+            } else { // view is unSwiped
+                background.setBounds(0, 0, 0, 0);
+            }
+
+            background.draw(c);
+            icon.draw(c);
         }
     }
 }

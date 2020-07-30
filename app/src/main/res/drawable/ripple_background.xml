@@ -12,8 +12,8 @@
     <item android:id="@android:id/background">
         <shape android:shape="rectangle">
             <gradient android:angle="90"
-                android:endColor="?attr/navBackground"
-                android:startColor="?attr/navBackground"
+                android:endColor="@color/navBackground"
+                android:startColor="@color/navBackground"
                 android:type="linear"/>
             <corners android:radius="@dimen/cardview_default_radius"/>
         </shape>
