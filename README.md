@@ -2,7 +2,7 @@
 Android App for managing personal information
 
 ## Google Play Store
-You can view the app on Play Store [here]()https://play.google.com/store/apps/details?id=com.idea.mydiary)
+You can view the app on Play Store [here](https://play.google.com/store/apps/details?id=com.idea.mydiary)
 
 ## Language and Libraries
 - Java
