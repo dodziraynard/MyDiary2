@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 /**
- * TODO: document your custom view class.
+ * Presents a painting area where objects can be drawn.
  */
 public class PaintView extends View {
     public static float BRUSH_SIZE = 5f;
