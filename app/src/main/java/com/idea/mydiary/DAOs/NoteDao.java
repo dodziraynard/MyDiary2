@@ -20,7 +20,7 @@ public interface NoteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insertNote(Note note);
 
-    @Query("DELETE FROM "+NOTE_TABLE)
+    @Query("DELETE FROM " + NOTE_TABLE)
     void deleteAll();
 
     @Delete
@@ -32,7 +32,7 @@ public interface NoteDao {
     @Query("SELECT * from " + NOTE_TABLE + " ORDER BY id ASC")
     LiveData<List<Note>> getAllNotes();
 
-    @Query("SELECT * from " + NOTE_TABLE + " WHERE is_backed_up = :isBackedUp " + " ORDER BY id ASC" )
+    @Query("SELECT * from " + NOTE_TABLE + " WHERE is_backed_up = :isBackedUp " + " ORDER BY id ASC")
     LiveData<List<Note>> getBackedUpNotes(boolean isBackedUp);
 
     @Query("SELECT * FROM " + NOTE_TABLE + " WHERE id = :id")

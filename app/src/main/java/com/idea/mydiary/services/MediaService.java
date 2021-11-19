@@ -57,7 +57,7 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
 
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
-        if(mAudioFile != null && !mAudioFile.isEmpty()){
+        if (mAudioFile != null && !mAudioFile.isEmpty()) {
             try {
                 mMediaPlayer.setDataSource(mAudioFile);
             } catch (IOException | NullPointerException e) {
@@ -168,7 +168,7 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
         @Override
         public void onReceive(Context context, Intent intent) {
             int position = intent.getIntExtra(SEEK_POSITION, -1);
-            resumePosition = position*1000;
+            resumePosition = position * 1000;
             mMediaPlayer.seekTo(resumePosition);
         }
     };

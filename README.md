@@ -1,4 +1,4 @@
-# MyDiary2
+# MyDiary
 Android App for managing personal information
 
 ## Google Play Store

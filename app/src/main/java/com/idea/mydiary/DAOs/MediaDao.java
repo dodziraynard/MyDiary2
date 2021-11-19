@@ -9,12 +9,10 @@ import androidx.room.Query;
 import androidx.room.Update;
 
 import com.idea.mydiary.models.Media;
-import com.idea.mydiary.models.Note;
 
 import java.util.List;
 
 import static com.idea.mydiary.models.Media.MEDIA_TABLE;
-import static com.idea.mydiary.models.Note.NOTE_TABLE;
 
 @Dao
 public interface MediaDao {
@@ -31,7 +29,7 @@ public interface MediaDao {
     @Delete
     void deleteMedia(Media media);
 
-    @Query("SELECT * from " + MEDIA_TABLE + " WHERE is_backed_up = :isBackedUp " + " ORDER BY id ASC" )
+    @Query("SELECT * from " + MEDIA_TABLE + " WHERE is_backed_up = :isBackedUp " + " ORDER BY id ASC")
     LiveData<List<Media>> getBackedUpMedia(boolean isBackedUp);
 
     @Query("SELECT * from " + MEDIA_TABLE + " WHERE note_id == :noteId ORDER BY id ASC")

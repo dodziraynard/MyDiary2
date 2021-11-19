@@ -111,7 +111,7 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>
             @Override
             public void onDismissed(Snackbar transientBottomBar, int event) {
                 super.onDismissed(transientBottomBar, event);
-                if(mCanDelete){
+                if (mCanDelete) {
                     listener.deleteNote(mRecentlyDeletedItem);
                 }
             }

@@ -1,14 +1,9 @@
 package com.idea.mydiary.customviews;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
-import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -40,7 +35,7 @@ public class CircularSeekBarWithCenterButtonView extends View {
 
     private void init(Context context, AttributeSet attrs, int defStyle) {
         onBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_play);
-        offBitmap = BitmapFactory.decodeResource(context.getResources(),R.drawable.ic_pause);
+        offBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_pause);
     }
 
 

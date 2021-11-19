@@ -166,22 +166,22 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
         mFirebaseAuth.signInWithCredential(credential)
-            .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                @Override
-                public void onComplete(@NonNull Task<AuthResult> task) {
-                    Log.d(TAG, "signInWithCredential:onComplete:" + task.isSuccessful());
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        Log.d(TAG, "signInWithCredential:onComplete:" + task.isSuccessful());
 
-                    // If sign in fails, display a message to the user. If sign in succeeds
-                    // the auth state listener will be notified and logic to handle the
-                    // signed in user can be handled in the listener.
-                    if (!task.isSuccessful()) {
-                        Log.w(TAG, "signInWithCredential", task.getException());
-                        Toast.makeText(AccountActivity.this, "Authentication failed.",
-                                Toast.LENGTH_SHORT).show();
+                        // If sign in fails, display a message to the user. If sign in succeeds
+                        // the auth state listener will be notified and logic to handle the
+                        // signed in user can be handled in the listener.
+                        if (!task.isSuccessful()) {
+                            Log.w(TAG, "signInWithCredential", task.getException());
+                            Toast.makeText(AccountActivity.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                        recreate();
                     }
-                    recreate();
-                }
-            });
+                });
     }
 
     @Override
@@ -277,7 +277,7 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
-                        } else{
+                        } else {
                             try {
                                 mTextRestore.setText("Some media files are not uploaded!");
                             } catch (Exception e) {
@@ -442,7 +442,7 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
             if (account != null) {
                 firebaseAuthWithGoogle(account);
-            } else{
+            } else {
                 Toast.makeText(this, "Sign in failed", Toast.LENGTH_SHORT).show();
             }
             updateUI(account);
@@ -475,34 +475,34 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
     private void signOut() {
         mViewModel.setProcessing(true);
         mGoogleSignInClient.signOut()
-            .addOnCompleteListener(this, new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(@NonNull Task<Void> task) {
-                    task.addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-                            Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
-                                    R.string.string_sing_out_success, Snackbar.LENGTH_LONG);
-                            snackbar.show();
-                            finish();
-                        }
-                    });
-                    task.addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
-                                    R.string.string_failed, Snackbar.LENGTH_LONG);
-                            snackbar.show();
-                            mViewModel.setProcessing(false);
-                        }
-                    });
-                }
-            });
+                .addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        task.addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
+                                        R.string.string_sing_out_success, Snackbar.LENGTH_LONG);
+                                snackbar.show();
+                                finish();
+                            }
+                        });
+                        task.addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
+                                        R.string.string_failed, Snackbar.LENGTH_LONG);
+                                snackbar.show();
+                                mViewModel.setProcessing(false);
+                            }
+                        });
+                    }
+                });
     }
 
-    private boolean permissionsDenied(){
+    private boolean permissionsDenied() {
         for (int i = 0; i < PERMISSIONS_COUNT; i++) {
-            if(checkSelfPermission(PERMISSIONS[i])!= PackageManager.PERMISSION_GRANTED){
+            if (checkSelfPermission(PERMISSIONS[i]) != PackageManager.PERMISSION_GRANTED) {
                 return true;
             }
         }
@@ -514,13 +514,12 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(permissionsDenied()){
+        if (permissionsDenied()) {
             Toast.makeText(this, "Perm Denied", Toast.LENGTH_LONG).show();
             ((ActivityManager) (this.getSystemService(ACTIVITY_SERVICE))).clearApplicationUserData();
             Log.e("HRD", "Perm Denied");
             recreate();
-        }
-        else{
+        } else {
             onResume();
         }
     }
@@ -528,7 +527,7 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     public void onResume() {
         super.onResume();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && permissionsDenied()){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && permissionsDenied()) {
             requestPermissions(PERMISSIONS, REQUEST_PERMISSIONS_CODE);
         }
     }

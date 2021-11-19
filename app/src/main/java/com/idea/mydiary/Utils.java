@@ -2,13 +2,11 @@ package com.idea.mydiary;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
 import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.view.View;
@@ -26,8 +24,6 @@ import java.nio.channels.FileChannel;
 
 public class Utils {
     private final File APP_FOLDER;
-    //    public static File APP_FOLDER = new File(
-//            Environment.getExternalStorageDirectory().toString() + "/MyDiary");
 
     public Utils(Context context) {
         APP_FOLDER = new File(

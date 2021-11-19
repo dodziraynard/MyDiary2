@@ -40,7 +40,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
@@ -133,7 +132,7 @@ public class NewNoteActivity extends AppCompatActivity {
             @Override
             public void onRewardedAdFailedToLoad(LoadAdError loadAdError) {
                 super.onRewardedAdFailedToLoad(loadAdError);
-                Log.d("HRD", "onRewardedAdFailedToLoad "+loadAdError.getMessage());
+                Log.d("HRD", "onRewardedAdFailedToLoad " + loadAdError.getMessage());
             }
         };
         rewardedAd.loadAd(new AdRequest.Builder().build(), adLoadCallback);

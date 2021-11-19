@@ -50,7 +50,7 @@ public class MyDiaryRepository {
     }
 
     public LiveData<Note> getNote(long id) {
-        Log.d(TAG, "getNote "+id);
+        Log.d(TAG, "getNote " + id);
         return mNoteDao.getNote(id);
     }
 
@@ -72,7 +72,7 @@ public class MyDiaryRepository {
         mNoteDao.insertNote(note);
     }
 
-    public long insertNoteAndReturnId(Note note){
+    public long insertNoteAndReturnId(Note note) {
         Callable<Long> insertCallable = new Callable<Long>() {
             @Override
             public Long call() throws Exception {
@@ -161,13 +161,13 @@ public class MyDiaryRepository {
         @Override
         protected Void doInBackground(final Note... params) {
             Note note = params[0];
-            if(note == null) return null;
+            if (note == null) return null;
             List<Media> mediaList = mDb.mMediaDao().getNoteMediaNoLiveData(note.getId());
             mDb.mMediaDao().deleteMedia(mediaList);
             mDb.mNoteDao().deleteNote(note);
 
             Log.d(TAG, "Media Deleted");
-            Log.d(TAG, "Note Deleted "+note.getId());
+            Log.d(TAG, "Note Deleted " + note.getId());
             return null;
         }
     }
@@ -182,8 +182,8 @@ public class MyDiaryRepository {
 
         @Override
         protected Void doInBackground(final Media... params) {
-           mDb.mMediaDao().insertMedia(params[0]);
-           return null;
+            mDb.mMediaDao().insertMedia(params[0]);
+            return null;
         }
     }
 

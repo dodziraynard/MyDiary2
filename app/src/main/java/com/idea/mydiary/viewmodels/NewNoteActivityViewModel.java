@@ -3,7 +3,6 @@ package com.idea.mydiary.viewmodels;
 import android.app.Application;
 import android.util.Log;
 
-import androidx.annotation.LongDef;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -41,7 +40,6 @@ public class NewNoteActivityViewModel extends AndroidViewModel {
     }
 
     public long insertNote(Note note) {
-//        return mRepository.insertNote(note);
         return mRepository.insertNoteAndReturnId(note);
     }
 
@@ -57,7 +55,7 @@ public class NewNoteActivityViewModel extends AndroidViewModel {
         return mRepository.getNoteMedia(noteId);
     }
 
-    public void insertMedia(Media media){
+    public void insertMedia(Media media) {
         mRepository.insertMedia(media);
     }
 

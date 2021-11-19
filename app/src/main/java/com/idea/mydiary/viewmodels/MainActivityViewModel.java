@@ -34,11 +34,11 @@ public class MainActivityViewModel extends AndroidViewModel {
         mRepository.deleteNote(note);
     }
 
-    public List<Media> getNotesMedia(long id){
+    public List<Media> getNotesMedia(long id) {
         List<Media> mediaList = new ArrayList<>();
-        for(Media media : mMediaList){
-            if(media.getNoteId() == id){
-              mediaList.add(media);
+        for (Media media : mMediaList) {
+            if (media.getNoteId() == id) {
+                mediaList.add(media);
             }
         }
         return mediaList;

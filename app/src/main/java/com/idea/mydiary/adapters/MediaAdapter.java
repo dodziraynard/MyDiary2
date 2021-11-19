@@ -12,9 +12,9 @@ import android.widget.ImageButton;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.idea.mydiary.R;
 import com.idea.mydiary.models.Media;
 import com.idea.mydiary.types.MediaType;
-import com.idea.mydiary.R;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -33,10 +33,11 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.ViewHolder> 
 
     public interface OnItemClickListener {
         void onImageButtonClickListener(Media media);
+
         void onAudioButtonClickListener(Media media);
     }
 
-    public void setOnImageButtonClickListener(OnItemClickListener listener){
+    public void setOnImageButtonClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
 
@@ -58,7 +59,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.ViewHolder> 
         }
     }
 
-    public void setMediaList(List<Media> mediaList){
+    public void setMediaList(List<Media> mediaList) {
         this.mMediaList = mediaList;
         notifyDataSetChanged();
     }
@@ -80,10 +81,10 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.ViewHolder> 
                 @Override
                 public void onClick(View v) {
                     mMedia = mMediaList.get(getLayoutPosition());
-                    if(listener != null){
-                        if(mMedia.getMediaTypeEnum() == MediaType.IMAGE){
+                    if (listener != null) {
+                        if (mMedia.getMediaTypeEnum() == MediaType.IMAGE) {
                             listener.onImageButtonClickListener(mMedia);
-                        } else{
+                        } else {
                             listener.onAudioButtonClickListener(mMedia);
                         }
                     }
@@ -111,7 +112,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.ViewHolder> 
             ViewHolder holder = mViewHolderWeakReference.get();
             try {
                 holder.mImageButton.setImageBitmap(bitmap);
-            } catch (NullPointerException e){
+            } catch (NullPointerException e) {
                 e.printStackTrace();
             }
         }

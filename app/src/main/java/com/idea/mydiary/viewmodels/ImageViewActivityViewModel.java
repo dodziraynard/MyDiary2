@@ -7,7 +7,6 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
 import com.idea.mydiary.models.Media;
-import com.idea.mydiary.models.Note;
 import com.idea.mydiary.repositories.MyDiaryRepository;
 
 public class ImageViewActivityViewModel extends AndroidViewModel {

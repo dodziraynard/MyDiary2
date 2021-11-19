@@ -45,7 +45,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bugfender.sdk.Bugfender;
 import com.bugfender.sdk.ui.FeedbackStyle;
-import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
@@ -626,7 +625,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void showAd(){
+    private void showAd() {
         if (rewardedAd.isLoaded()) {
             Activity activityContext = MainActivity.this;
             RewardedAdCallback adCallback = new RewardedAdCallback() {

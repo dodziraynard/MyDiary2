@@ -1,7 +1,6 @@
 package com.idea.mydiary;
 
 import android.content.Context;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.room.Database;
@@ -40,9 +39,7 @@ public abstract class MyDiaryRoomDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                             MyDiaryRoomDatabase.class, MY_DIARY_DATABASE)
-//                            .addCallback(sRoomDatabaseCallback)
                             .fallbackToDestructiveMigration()
-//                            .allowMainThreadQueries()
                             .build();
                 }
             }
@@ -50,7 +47,7 @@ public abstract class MyDiaryRoomDatabase extends RoomDatabase {
         return INSTANCE;
     }
 
-//    //!!!!! START WITH FRESH DATA ON EACH LAUNCH
+    //    //!!!!! START WITH FRESH DATA ON EACH LAUNCH
     private static RoomDatabase.Callback sRoomDatabaseCallback = new RoomDatabase.Callback() {
         @Override
         public void onOpen(@NonNull SupportSQLiteDatabase db) {
