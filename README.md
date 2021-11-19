@@ -17,7 +17,8 @@ git clone https://github.com/dodziraynard/MyDiary2.git
 ## Running
 Just run/build the project in android studio!
 
-## More screenshots
-```bash
-cd ./screenshots
-```
+## Screenshots
+<img src="./screenshots/1.webp" alt="Main Screen"/>
+<img src="./screenshots/2.webp" alt="Main Screen Dark"/>
+<img src="./screenshots/3.webp" alt="Reading Screen"/>
+<img src="./screenshots/4.webp" alt="Reading Screen Dark"/>
