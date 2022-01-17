@@ -193,27 +193,21 @@ public class NoteViewActivity extends AppCompatActivity {
             }
         });
 
-        cancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                stopMedia();
-                mPlayerDialog.dismiss();
-            }
+        cancel.setOnClickListener(v -> {
+            stopMedia();
+            mPlayerDialog.dismiss();
         });
 
-        mPlayerPlayPause.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mPlayerPaused) {
-                    resumeMedia();
-                    Log.d("HRD", "RESUME");
-                } else if (mPlayerStopped) {
-                    playMedia(mSelectedMedia.getUrl());
-                    Log.d("HRD", "playMedia " + mSelectedMedia.getUrl());
-                } else {
-                    pauseMedia();
-                    Log.d("HRD", "pauseMedia");
-                }
+        mPlayerPlayPause.setOnClickListener(v -> {
+            if (mPlayerPaused) {
+                resumeMedia();
+                Log.d("HRD", "RESUME");
+            } else if (mPlayerStopped) {
+                playMedia(mSelectedMedia.getUrl());
+                Log.d("HRD", "playMedia " + mSelectedMedia.getUrl());
+            } else {
+                pauseMedia();
+                Log.d("HRD", "pauseMedia");
             }
         });
 

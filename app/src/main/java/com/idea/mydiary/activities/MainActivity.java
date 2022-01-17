@@ -216,13 +216,7 @@ public class MainActivity extends AppCompatActivity
     private void updateLoggedInUserInfo() {
         GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(MainActivity.this);
         if (acct != null) {
-//            String personName = acct.getDisplayName();
-//            String personGivenName = acct.getGivenName();
-//            String personFamilyName = acct.getFamilyName();
             String personEmail = acct.getEmail();
-//            String personId = acct.getId();
-//            Uri personPhoto = acct.getPhotoUrl();
-
             TextView emailText = mHeaderView.findViewById(R.id.user_email);
             emailText.setText(personEmail);
         }
