@@ -1,10 +1,21 @@
 package com.idea.mydiary.activities;
 
+import static com.idea.mydiary.Utils.copyFile;
+import static com.idea.mydiary.Utils.deleteMyFile;
+import static com.idea.mydiary.Utils.enableStrictModeAll;
+import static com.idea.mydiary.Utils.getPathFromUri;
+import static com.idea.mydiary.Utils.hideKeyboard;
+import static com.idea.mydiary.Utils.padLeftZeros;
+import static com.idea.mydiary.activities.MainActivity.SELECTED_NOTE_ID;
+import static com.idea.mydiary.activities.PaintActivity.PAINTING_URL;
+import static com.idea.mydiary.services.MediaService.MEDIA_DURATION;
+import static com.idea.mydiary.services.MediaService.MEDIA_POSITION;
+import static com.idea.mydiary.services.MediaService.PLAYER_STATE;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -35,18 +46,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.rewarded.RewardItem;
-import com.google.android.gms.ads.rewarded.RewardedAd;
-import com.google.android.gms.ads.rewarded.RewardedAdCallback;
-import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.google.android.material.snackbar.Snackbar;
 import com.idea.mydiary.R;
 import com.idea.mydiary.Utils;
@@ -62,28 +65,13 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Objects;
 
-import static com.idea.mydiary.Utils.copyFile;
-import static com.idea.mydiary.Utils.deleteMyFile;
-import static com.idea.mydiary.Utils.enableStrictModeAll;
-import static com.idea.mydiary.Utils.getPathFromUri;
-import static com.idea.mydiary.Utils.hideKeyboard;
-import static com.idea.mydiary.Utils.padLeftZeros;
-import static com.idea.mydiary.activities.MainActivity.SELECTED_NOTE_ID;
-import static com.idea.mydiary.activities.PaintActivity.PAINTING_URL;
-import static com.idea.mydiary.services.MediaService.MEDIA_DURATION;
-import static com.idea.mydiary.services.MediaService.MEDIA_POSITION;
-import static com.idea.mydiary.services.MediaService.PLAYER_STATE;
-
 public class NewNoteActivity extends AppCompatActivity {
-
     public static final String SELECTED_IMAGE_URL = "SELECTED_IMAGE_URL";
     public static final String AUDIO_URI = "AUDIO_URI";
     public static final String SEEK_POSITION = "SEEK_POSITION";
     public static final String MEDIA_SERVICE_INFO = "MEDIA_SERVICE_INFO";
-    public static final int REQUEST_CODE_PAINT_ACTIVITY = 2;
     public static final String SELECTED_MEDIA_ID = "MEDIA_ID";
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.idea.mydiary.PLAY";
     public static final String Broadcast_RESUME_AUDIO = "com.idea.mydiary.RESUME";
@@ -91,24 +79,40 @@ public class NewNoteActivity extends AppCompatActivity {
     public static final String Broadcast_SEEK_AUDIO = "com.idea.mydiary.SEEK";
     public static final String Broadcast_STOP_AUDIO = "com.idea.mydiary.STOP";
     private static final int SELECT_PICTURE_REQUEST_CODE = 1;
+    public static final int REQUEST_CODE_PAINT_ACTIVITY = 2;
+    private static final int REQUEST_PERMISSIONS_CODE = 0;
+    public static File APP_FOLDER;
+    private boolean serviceBound = false;
+    private boolean mPlayerPaused = false;
+    private boolean mPlayerStopped = true;
+    private boolean mIsNoteCancel = false;
+    private boolean isSnackShowing = false;
+    private RecyclerView mMediaRecyclerView;
+    private MediaService mMediaService;
+    private MediaReceiver receiver;
+    private Utils.AudioRecorder mAudioRecorder;
+    private String mRecordingFileName;
+    private AlertDialog mRecordingDialog;
+    private AlertDialog mPlayerDialog;
+    private Media mSelectedMedia;
+    private TextView mTextViewDuration;
+    private ImageView mPlayerPlayPause;
+    private SeekBar mPlayerSeekBar;
+    private MediaAdapter mAdapter;
+    private NewNoteActivityViewModel mViewModel;
+    private Note mNote = null;
+    private EditText mEditTextNoteText;
+    private EditText mTextViewNoteTitle;
+    private Snackbar mSnackbar;
+    boolean mReceiverRegistered = false;
+
+    // Permissions required to record and play audio.
     private static final String[] PERMISSIONS = {
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
     };
-    private static final int REQUEST_PERMISSIONS_CODE = 0;
     private static final int PERMISSIONS_COUNT = PERMISSIONS.length;
-    public static File APP_FOLDER;
-    boolean mReceiverRegistered = false;
-    private Note mNote = null;
-    private EditText mEditTextNoteText;
-    private EditText mTextViewNoteTitle;
-    private TextView mDateView;
-    private boolean mIsNoteCancel = false;
-    private Calendar mCalendar;
-    private Snackbar mSnackbar;
-    private boolean isSnackShowing = false;
-    private RewardedAd rewardedAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,25 +121,11 @@ public class NewNoteActivity extends AppCompatActivity {
         if (getSupportActionBar() != null)
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setTitle(getString(R.string.string_edit_note));
+        
+        // Ensure too much work is not being done on the main thread.
         enableStrictModeAll();
+
         initViews();
-
-        MobileAds.initialize(this);
-
-        rewardedAd = new RewardedAd(this,
-                getString(R.string.reward_ad_unit_id));
-        RewardedAdLoadCallback adLoadCallback = new RewardedAdLoadCallback() {
-            @Override
-            public void onRewardedAdLoaded() {
-            }
-
-            @Override
-            public void onRewardedAdFailedToLoad(LoadAdError loadAdError) {
-                super.onRewardedAdFailedToLoad(loadAdError);
-                Log.d("HRD", "onRewardedAdFailedToLoad " + loadAdError.getMessage());
-            }
-        };
-        rewardedAd.loadAd(new AdRequest.Builder().build(), adLoadCallback);
 
         APP_FOLDER = new Utils(this).getAppFolder();
 
@@ -145,11 +135,14 @@ public class NewNoteActivity extends AppCompatActivity {
         mViewModel = new ViewModelProvider(this).get(NewNoteActivityViewModel.class);
 
         Intent intent = getIntent();
+
+        // Retrieve note to edit from previous activity.
         long selectedNoteId = intent.getLongExtra(SELECTED_NOTE_ID, -1);
         if (selectedNoteId != -1) {
             mViewModel.setCurrentNoteId(selectedNoteId);
         }
 
+        // Create new note if no note has been passed from previous activity.
         if (mViewModel.getCurrentNoteId() == -1) {
             mNote = new Note("", Calendar.getInstance().getTimeInMillis(), "");
             mViewModel.setCurrentNoteIsNew(true);
@@ -160,27 +153,9 @@ public class NewNoteActivity extends AppCompatActivity {
                 displayViews();
             });
         }
-
-        final DatePickerDialog.OnDateSetListener dateSetListener = (view, year, month, dayOfMonth) -> {
-            mCalendar.set(Calendar.YEAR, year);
-            mCalendar.set(Calendar.MONTH, month);
-            mCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            mNote.setDate(mCalendar.getTimeInMillis());
-            displayViews();
-        };
-
-        mDateView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new DatePickerDialog(NewNoteActivity.this, R.style.DialogTheme, dateSetListener,
-                        mCalendar.get(Calendar.YEAR),
-                        mCalendar.get(Calendar.MONTH),
-                        mCalendar.get(Calendar.DAY_OF_MONTH)
-                ).show();
-            }
-        });
     }
 
+    // Listener for attaching images to notes.
     View.OnClickListener imageAttachmentListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -189,6 +164,8 @@ public class NewNoteActivity extends AppCompatActivity {
             isSnackShowing = false;
         }
     };
+
+    // Listener for opening custom paint view activity.
     View.OnClickListener paintAttachmentListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -199,22 +176,8 @@ public class NewNoteActivity extends AppCompatActivity {
             isSnackShowing = false;
         }
     };
-    private RecyclerView mMediaRecyclerView;
-    private boolean serviceBound = false;
-    private MediaService mMediaService;
-    private MediaReceiver receiver;
-    private boolean mPlayerPaused = false;
-    private Utils.AudioRecorder mAudioRecorder;
-    private String mRecordingFileName;
-    private AlertDialog mRecordingDialog;
-    private AlertDialog mPlayerDialog;
-    private Media mSelectedMedia;
-    private TextView mTextViewDuration;
-    private ImageView mPlayerPlayPause;
-    private SeekBar mPlayerSeekBar;
-    private boolean mPlayerStopped = true;
-    private MediaAdapter mAdapter;
-    private NewNoteActivityViewModel mViewModel;
+
+    // Listener opening recording dialog box.
     View.OnClickListener recordAttachmentListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -223,16 +186,16 @@ public class NewNoteActivity extends AppCompatActivity {
             isSnackShowing = false;
         }
     };
-    private ServiceConnection serviceConnection = new ServiceConnection() {
+
+    // A service connection to the media player service.
+    private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             MediaService.LocalBinder binder = (MediaService.LocalBinder) service;
             mMediaService = binder.getService();
             serviceBound = true;
-            Log.d("HRD", "Service registered");
         }
-
         @Override
         public void onServiceDisconnected(ComponentName name) {
             serviceBound = false;
@@ -294,7 +257,6 @@ public class NewNoteActivity extends AppCompatActivity {
         if (mNote == null) return;
         mEditTextNoteText.setText(mNote.getText());
         mTextViewNoteTitle.setText(mNote.getTitle());
-        mDateView.setText(mNote.getFullDate());
 
         mMediaRecyclerView.setAdapter(mAdapter);
         mMediaRecyclerView.setLayoutManager(new LinearLayoutManager(
@@ -316,27 +278,18 @@ public class NewNoteActivity extends AppCompatActivity {
         });
 
         if (!mViewModel.currentNoteIsNew()) {
-            mViewModel.getNoteMedia(mViewModel.getCurrentNoteId()).observe(this, new Observer<List<Media>>() {
-                @Override
-                public void onChanged(List<Media> media) {
-                    mAdapter.setMediaList(media);
-                }
-            });
+            mViewModel.getNoteMedia(mViewModel.getCurrentNoteId()).observe(this, media -> mAdapter.setMediaList(media));
         }
     }
 
     private void initViews() {
         mEditTextNoteText = findViewById(R.id.editTextNoteText);
         mTextViewNoteTitle = findViewById(R.id.editTextNoteTitle);
-        mDateView = findViewById(R.id.textViewDate);
-        mCalendar = Calendar.getInstance();
         mMediaRecyclerView = findViewById(R.id.media_recycler_view);
         mAdapter = new MediaAdapter(this);
-
         if (mNote != null) {
             mEditTextNoteText.setText(mNote.getText());
             mTextViewNoteTitle.setText(mNote.getTitle());
-            mDateView.setText(mNote.getFullDate());
         }
     }
 
@@ -348,7 +301,6 @@ public class NewNoteActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
-//        outState.putString(STATE_AUDIO, mSelectedMedia);
         outState.putBoolean("ServiceState", serviceBound);
         outState.putBoolean("ReceiverState", mReceiverRegistered);
         super.onSaveInstanceState(outState);
@@ -380,7 +332,7 @@ public class NewNoteActivity extends AppCompatActivity {
         registerReceiver(receiver, new IntentFilter(MEDIA_SERVICE_INFO));
         mReceiverRegistered = true;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && permissionsDenied()) {
+        if (permissionsDenied()) {
             mViewModel.setCanShowAd(false);
             requestPermissions(PERMISSIONS, REQUEST_PERMISSIONS_CODE);
         }
@@ -412,6 +364,7 @@ public class NewNoteActivity extends AppCompatActivity {
         } else {
             mViewModel.updateNote(mNote);
         }
+        Toast.makeText(this, "Note saved successfully.", Toast.LENGTH_SHORT).show();
         return true;
     }
 
@@ -448,8 +401,10 @@ public class NewNoteActivity extends AppCompatActivity {
             return;
         }
 
+        // Creating a custom snack bar to display
+        // Attachment option buttons.
         View custom = LayoutInflater.from(this).inflate(R.layout.custom_snackbar, null);
-        mSnackbar = Snackbar.make(mDateView, "", Snackbar.LENGTH_INDEFINITE);
+        mSnackbar = Snackbar.make(findViewById(android.R.id.content), "", Snackbar.LENGTH_INDEFINITE);
         mSnackbar.getView().setPadding(0, 0, 0, 0);
         ((ViewGroup) mSnackbar.getView()).removeAllViews();
         ((ViewGroup) mSnackbar.getView()).addView(custom);
@@ -489,39 +444,32 @@ public class NewNoteActivity extends AppCompatActivity {
         final ImageButton deleteButton = customLayout.findViewById(R.id.deleteButton);
         final ImageButton saveButton = customLayout.findViewById(R.id.saveButton);
 
-        deleteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deleteMyFile(NewNoteActivity.this, mRecordingFileName);
-                mRecordingDialog.dismiss();
-            }
+        deleteButton.setOnClickListener(v -> {
+            deleteMyFile(NewNoteActivity.this, mRecordingFileName);
+            mRecordingDialog.dismiss();
         });
 
-        saveButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                try {
-                    if (mAudioRecorder != null && mRecordingFileName != null && !mRecordingFileName.isEmpty()) {
-                        mAudioRecorder.stop();
-                        mSelectedMedia = new Media(MediaType.AUDIO.name(), mRecordingFileName,
-                                mViewModel.getCurrentNoteId());
-                        mViewModel.insertMedia(mSelectedMedia);
-                    }
-                } catch (IOException | IllegalStateException e) {
-                    Log.d("HRD", "Error saving");
-                    e.printStackTrace();
+        saveButton.setOnClickListener(v -> {
+            try {
+                if (mAudioRecorder != null && mRecordingFileName != null && !mRecordingFileName.isEmpty()) {
+                    mAudioRecorder.stop();
+                    mSelectedMedia = new Media(MediaType.AUDIO.name(), mRecordingFileName,
+                            mViewModel.getCurrentNoteId());
+                    mViewModel.insertMedia(mSelectedMedia);
                 }
-                mChronometer.stop();
-                mAudioRecorder = null;
-                mRecordingDialog.dismiss();
+            } catch (IOException | IllegalStateException e) {
+                Toast.makeText(mMediaService, "Error saving", Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
             }
+            mChronometer.stop();
+            mAudioRecorder = null;
+            mRecordingDialog.dismiss();
         });
 
         statusView.setOnClickListener(new View.OnClickListener() {
             boolean isRecording = false;
             boolean isPaused = false;
-            boolean canPauseResume = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;
+            final boolean canPauseResume = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;
             long timeWhenStopped = 0;
 
             @Override
@@ -555,7 +503,7 @@ public class NewNoteActivity extends AppCompatActivity {
             }
 
             private void startRecording() {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && permissionsDenied()) {
+                if (permissionsDenied()) {
                     requestPermissions(PERMISSIONS, REQUEST_PERMISSIONS_CODE);
                 }
                 textViewStatus.setText("");
@@ -572,7 +520,7 @@ public class NewNoteActivity extends AppCompatActivity {
             }
 
             private void pauseRecording() {
-                textViewStatus.setText("Tap to continue.");
+                textViewStatus.setText(R.string.tap_to_continue);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     mAudioRecorder.pause();
                 }
@@ -590,7 +538,7 @@ public class NewNoteActivity extends AppCompatActivity {
             }
 
             private void stopRecording() {
-                textViewStatus.setText("Tap to start.");
+                textViewStatus.setText(R.string.tap_to_start);
                 try {
                     mAudioRecorder.stop();
                     mChronometer.stop();
@@ -635,36 +583,24 @@ public class NewNoteActivity extends AppCompatActivity {
             }
         });
 
-        deleteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                stopMedia();
-                mViewModel.deleteMedia(mSelectedMedia);
-                mPlayerDialog.dismiss();
-            }
+        deleteButton.setOnClickListener(v -> {
+            stopMedia();
+            mViewModel.deleteMedia(mSelectedMedia);
+            mPlayerDialog.dismiss();
         });
 
-        cancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                stopMedia();
-                mPlayerDialog.dismiss();
-            }
+        cancel.setOnClickListener(v -> {
+            stopMedia();
+            mPlayerDialog.dismiss();
         });
 
-        mPlayerPlayPause.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mPlayerPaused) {
-                    resumeMedia();
-                    Log.d("HRD", "RESUME");
-                } else if (mPlayerStopped) {
-                    playMedia(mSelectedMedia.getUrl());
-                    Log.d("HRD", "playMedia " + mSelectedMedia.getUrl());
-                } else {
-                    pauseMedia();
-                    Log.d("HRD", "pauseMedia");
-                }
+        mPlayerPlayPause.setOnClickListener(v -> {
+            if (mPlayerPaused) {
+                resumeMedia();
+            } else if (mPlayerStopped) {
+                playMedia(mSelectedMedia.getUrl());
+            } else {
+                pauseMedia();
             }
         });
 
@@ -750,33 +686,17 @@ public class NewNoteActivity extends AppCompatActivity {
                         activity.mViewModel.getCurrentNoteId());
                 activity.mViewModel.insertMedia(media);
             }
-
         }
     }
 
     @Override
     public void onBackPressed() {
-        showAd();
         super.onBackPressed();
-    }
-
-    private void showAd() {
-        if (rewardedAd.isLoaded() && mViewModel.isCanShowAd()) {
-            Activity activityContext = NewNoteActivity.this;
-            RewardedAdCallback adCallback = new RewardedAdCallback() {
-                @Override
-                public void onUserEarnedReward(@NonNull RewardItem reward) {
-                    Toast.makeText(activityContext, "Congratulation !", Toast.LENGTH_SHORT).show();
-                }
-            };
-            rewardedAd.show(activityContext, adCallback);
-        }
     }
 
     class MediaReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d("HRD", "RECEIVE");
             if (Objects.equals(intent.getAction(), MEDIA_SERVICE_INFO) && mPlayerPlayPause != null) {
                 String playerState = intent.getStringExtra(PLAYER_STATE);
                 int duration = intent.getIntExtra(MEDIA_DURATION, 0);

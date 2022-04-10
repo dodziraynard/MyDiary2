@@ -243,7 +243,6 @@ public class PaintView extends View {
     }
 
     private static class FingerPath {
-
         public int color;
         public boolean emboss;
         public boolean blur;

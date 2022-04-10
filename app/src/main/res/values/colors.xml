@@ -14,6 +14,7 @@
     <color name="lowContrastTextColor">#99901040</color>
     <color name="textHint">@android:color/darker_gray</color>
     <color name="blackWhite">#121212</color>
+    <color name="gray">#99000000</color>
     <color name="background">#F0F0F0</color>
     <color name="dialogBackground">#F0F0F0</color>
     <color name="black_overlay">#66000000</color>

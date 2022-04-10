@@ -27,21 +27,15 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -55,8 +49,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Responsible for authenticating users using Google Sign in and backing up notes.
+ */
 public class AccountActivity extends AppCompatActivity implements View.OnClickListener {
-
     public static final int RC_SIGN_IN = 0;
     private static final String TAG = "LoginActivity";
     private GoogleSignInClient mGoogleSignInClient;
@@ -69,16 +65,15 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
     private FirebaseFirestore mFirestore;
     private String mAccountId;
     private List<Note> mNotesToBackUp;
-    private boolean mSomeNotBackedUp;
     private Query mQuery;
     private FirebaseStorage mStorage;
     private StorageReference mStorageRef;
     private FirebaseAuth mFirebaseAuth;
-    private FirebaseUser mFirebaseUser;
     private List<Media> mMediaList;
     private File APP_FOLDER;
     private TextView mTextRestore;
 
+    //Permissions required to backup and restore notes.
     private static final String[] PERMISSIONS = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -93,11 +88,12 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
         setContentView(R.layout.activity_account);
         APP_FOLDER = new Utils(this).getAppFolder();
 
-
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
+
+        // Init views and listeners
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
         mButtonLogin = findViewById(R.id.button_login);
         mTextLogout = findViewById(R.id.logout);
@@ -106,48 +102,38 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
         mProgressBar = findViewById(R.id.progressBar);
         mTextRestore = findViewById(R.id.text_restore);
 
+        mFirestore = FirebaseFirestore.getInstance();
+        mStorage = FirebaseStorage.getInstance();
+        mStorageRef = mStorage.getReference();
+        mFirebaseAuth = FirebaseAuth.getInstance();
+
         mBackUp.setOnClickListener(this);
         mRestoreBackup.setOnClickListener(this);
         mButtonLogin.setOnClickListener(this);
         mTextLogout.setOnClickListener(this);
 
         mViewModel = new ViewModelProvider(this).get(AccountActivityViewModel.class);
-        mViewModel.isProcessing().observe(this, new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean isProcessing) {
-                if (isProcessing) {
-                    mProgressBar.setVisibility(View.VISIBLE);
-                } else {
-                    mProgressBar.setVisibility(View.GONE);
-                }
+        mViewModel.isProcessing().observe(this, isProcessing -> {
+            if (isProcessing) { // Activity is busy.
+                mProgressBar.setVisibility(View.VISIBLE);
+            } else {
+                mProgressBar.setVisibility(View.GONE);
             }
         });
 
-        mFirestore = FirebaseFirestore.getInstance();
-        mStorage = FirebaseStorage.getInstance();
-        mStorageRef = mStorage.getReference();
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        mFirebaseUser = mFirebaseAuth.getCurrentUser();
-
-        mViewModel.getBackedUpNotes(false).observe(this, new Observer<List<Note>>() {
-            @Override
-            public void onChanged(List<Note> noteList) {
-                if (noteList.size() < 1) {
-                    mBackUp.setVisibility(View.GONE);
-                    return;
-                }
-                if (mAccountId != null && !mAccountId.isEmpty()) {
-                    mNotesToBackUp = noteList;
-                }
+        mViewModel.getBackedUpNotes(false).observe(this, noteList -> {
+            if (noteList.size() < 1) {
+                mBackUp.setVisibility(View.GONE);
+                return;
+            }
+            if (mAccountId != null && !mAccountId.isEmpty()) {
+                mNotesToBackUp = noteList;
             }
         });
 
-        mViewModel.getBackedUpMedia(false).observe(this, new Observer<List<Media>>() {
-            @Override
-            public void onChanged(List<Media> items) {
-                mMediaList = items;
-            }
-        });
+        mViewModel.getBackedUpMedia(false).observe(
+                this, items -> mMediaList = items
+        );
     }
 
     @Override
@@ -166,21 +152,15 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
         mFirebaseAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        Log.d(TAG, "signInWithCredential:onComplete:" + task.isSuccessful());
-
-                        // If sign in fails, display a message to the user. If sign in succeeds
-                        // the auth state listener will be notified and logic to handle the
-                        // signed in user can be handled in the listener.
-                        if (!task.isSuccessful()) {
-                            Log.w(TAG, "signInWithCredential", task.getException());
-                            Toast.makeText(AccountActivity.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                        recreate();
+                .addOnCompleteListener(this, task -> {
+                    // If sign in fails, display a message to the user. If sign in succeeds
+                    // the auth state listener will be notified and logic to handle the
+                    // signed in user can be handled in the listener.
+                    if (!task.isSuccessful()) {
+                        Toast.makeText(AccountActivity.this, "Authentication failed.",
+                                Toast.LENGTH_SHORT).show();
                     }
+                    recreate();
                 });
     }
 
@@ -218,24 +198,16 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
 
     private void addNotesToFirestore(List<Note> noteList) {
         mTextRestore.setVisibility(View.VISIBLE);
-        mTextRestore.setText("Your notes and media are being uploaded in the background...");
+        mTextRestore.setText(R.string.note_uploading);
         CollectionReference notes = mFirestore.collection("notes");
         for (Note note : noteList) {
             note.setAccountId(mAccountId);
             notes.add(note)
-                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                        @Override
-                        public void onSuccess(DocumentReference documentReference) {
-                            note.setBackedUp(true);
-                            mViewModel.updateNote(note);
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    mSomeNotBackedUp = true;
-                    Log.d("HRD", e.getMessage());
-                }
-            });
+                    .addOnSuccessListener(documentReference -> {
+                        note.setBackedUp(true);
+                        mViewModel.updateNote(note);
+                    })
+                    .addOnFailureListener(e -> Log.d("HRD", e.getMessage()));
         }
         uploadNoteMediaToFiresTore();
     }
@@ -250,7 +222,7 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
     public void uploadMediaFiles(Media media) {
         mViewModel.setProcessing(true);
         try {
-            mTextRestore.setText("Backing up media!");
+            mTextRestore.setText(R.string.media_backup);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -259,40 +231,24 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
         StorageReference reference = mStorageRef.child("images/" + file.getLastPathSegment());
         UploadTask uploadTask = reference.putFile(file);
 
-        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                Task<Uri> url = reference.getDownloadUrl();
-                url.addOnCompleteListener(new OnCompleteListener<Uri>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Uri> task) {
-                        if (task.isSuccessful()) {
-                            Uri downloadUri = task.getResult();
-                            if (downloadUri != null) {
-                                media.setDownloadURL(downloadUri.toString());
-                                uploadMediaObject(media);
-                            }
-                            try {
-                                mTextRestore.setText("All notes and media are backed up!");
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            try {
-                                mTextRestore.setText("Some media files are not uploaded!");
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        mViewModel.setProcessing(false);
+        uploadTask.addOnSuccessListener(taskSnapshot -> {
+            Task<Uri> url = reference.getDownloadUrl();
+            url.addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Uri downloadUri = task.getResult();
+                    if (downloadUri != null) {
+                        media.setDownloadURL(downloadUri.toString());
+                        uploadMediaObject(media);
                     }
-                });
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Log.d("HRD", e.getMessage());
-            }
+                    mTextRestore.setText(R.string.all_notes_backed_up);
+                } else {
+                    mTextRestore.setText(R.string.some_notes_backed_up);
+                }
+                mViewModel.setProcessing(false);
+            });
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "Failed", Toast.LENGTH_SHORT).show();
+            Log.d("HRD", e.getMessage());
         });
     }
 
@@ -300,66 +256,45 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
         CollectionReference mediaRef = mFirestore.collection("media");
         media.setAccountId(mAccountId);
         mediaRef.add(media)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        media.setBackedUp(true);
-                        mViewModel.updateMedia(media);
-                    }
+                .addOnSuccessListener(documentReference -> {
+                    media.setBackedUp(true);
+                    mViewModel.updateMedia(media);
                 });
     }
 
     public void restoreMediaFromFirestore() {
         mQuery = mFirestore.collection("media");
         mQuery = mQuery.whereEqualTo("accountId", mAccountId);
-        mQuery.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                Log.d("HRD", "onComplete " + mAccountId);
-                if (task.isSuccessful()) {
-                    QuerySnapshot document = task.getResult();
-                    if (document != null) {
-                        List<Media> list = document.toObjects(Media.class);
-                        for (Media media : list) {
-                            media.setBackedUp(true);
-                            downloadAndAttachImage(media);
-                        }
-                    } else {
-                        Log.d("HRD", "COMPlETED BUT NULL DOC");
-                    }
-
-                    try {
-                        mTextRestore.setText("All notes and media are restored!");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                } else {
-                    try {
-                        mTextRestore.setText("Some media files are not restored");
-                    } catch (Exception e) {
-                        e.printStackTrace();
+        mQuery.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                QuerySnapshot document = task.getResult();
+                if (document != null) {
+                    List<Media> list = document.toObjects(Media.class);
+                    for (Media media : list) {
+                        media.setBackedUp(true);
+                        downloadAndAttachImage(media);
                     }
                 }
-                mViewModel.setProcessing(false);
+                mTextRestore.setText(R.string.all_notes_restored);
+            } else {
+                mTextRestore.setText(R.string.some_files_not_restored);
             }
+            mViewModel.setProcessing(false);
         });
     }
 
     private void downloadAndAttachImage(Media media) {
-        Log.d("HRD", "downloadAndAttachImage: ");
         mViewModel.setProcessing(true);
         try {
-            mTextRestore.setText("Downloading media...");
+            mTextRestore.setText(R.string.downloading_media);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         String fileName = media.getUrl().split("/")[media.getUrl().split("/").length - 1];
         File destinationFile = new File(APP_FOLDER.getAbsolutePath() + "/" + fileName);
-        if (!destinationFile.getParentFile().exists())
+        if (destinationFile.getParentFile() != null && !destinationFile.getParentFile().exists())
             destinationFile.getParentFile().mkdirs();
-
         if (!destinationFile.exists()) {
             try {
                 destinationFile.createNewFile();
@@ -369,51 +304,41 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
         }
 
         StorageReference httpsReference = mStorage.getReferenceFromUrl(media.getDownloadURL());
-        httpsReference.getFile(destinationFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                media.setUrl(destinationFile.getAbsolutePath());
-                mViewModel.insertMedia(media);
-                mViewModel.setProcessing(false);
-                try {
-                    mTextRestore.setText("Restored!");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        httpsReference.getFile(destinationFile).addOnSuccessListener(taskSnapshot -> {
+            media.setUrl(destinationFile.getAbsolutePath());
+            mViewModel.insertMedia(media);
+            mViewModel.setProcessing(false);
+            try {
+                mTextRestore.setText(R.string.restored);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                mViewModel.setProcessing(false);
-                Log.d("HRD", exception.getMessage());
-                try {
-                    mTextRestore.setText("Some media files are not restored");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        }).addOnFailureListener(exception -> {
+            mViewModel.setProcessing(false);
+            try {
+                mTextRestore.setText(R.string.some_files_not_restored);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
     }
 
     public void restoreNoteFromFirestore() {
         mTextRestore.setVisibility(View.VISIBLE);
-        mTextRestore.setText("Your notes and media are being restored in the background...");
+        mTextRestore.setText(R.string.restoring_notes);
         mQuery = mFirestore.collection("notes");
         mQuery = mQuery.whereEqualTo("accountId", mAccountId);
-        mQuery.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()) {
-                    QuerySnapshot document = task.getResult();
-                    if (document != null) {
-                        List<Note> notes = document.toObjects(Note.class);
-                        for (Note note : notes) {
-                            note.setBackedUp(true);
-                            mViewModel.insertNote(note);
-                        }
+        mQuery.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                QuerySnapshot document = task.getResult();
+                if (document != null) {
+                    List<Note> notes = document.toObjects(Note.class);
+                    for (Note note : notes) {
+                        note.setBackedUp(true);
+                        mViewModel.insertNote(note);
                     }
-                    restoreMediaFromFirestore();
                 }
+                restoreMediaFromFirestore();
             }
         });
     }
@@ -449,7 +374,6 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason.
             // Please refer to the GoogleSignInStatusCodes class reference for more information.
-            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
             Toast.makeText(this, "signInResult:failed code=" + e.getStatusCode(), Toast.LENGTH_SHORT).show();
             updateUI(null);
         }
@@ -475,28 +399,19 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
     private void signOut() {
         mViewModel.setProcessing(true);
         mGoogleSignInClient.signOut()
-                .addOnCompleteListener(this, new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        task.addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
-                                        R.string.string_sing_out_success, Snackbar.LENGTH_LONG);
-                                snackbar.show();
-                                finish();
-                            }
-                        });
-                        task.addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
-                                        R.string.string_failed, Snackbar.LENGTH_LONG);
-                                snackbar.show();
-                                mViewModel.setProcessing(false);
-                            }
-                        });
-                    }
+                .addOnCompleteListener(this, task -> {
+                    task.addOnSuccessListener(aVoid -> {
+                        Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
+                                R.string.string_sing_out_success, Snackbar.LENGTH_LONG);
+                        snackbar.show();
+                        finish();
+                    });
+                    task.addOnFailureListener(e -> {
+                        Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
+                                R.string.string_failed, Snackbar.LENGTH_LONG);
+                        snackbar.show();
+                        mViewModel.setProcessing(false);
+                    });
                 });
     }
 
@@ -517,7 +432,6 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
         if (permissionsDenied()) {
             Toast.makeText(this, "Perm Denied", Toast.LENGTH_LONG).show();
             ((ActivityManager) (this.getSystemService(ACTIVITY_SERVICE))).clearApplicationUserData();
-            Log.e("HRD", "Perm Denied");
             recreate();
         } else {
             onResume();
@@ -527,7 +441,7 @@ public class AccountActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     public void onResume() {
         super.onResume();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && permissionsDenied()) {
+        if (permissionsDenied()) {
             requestPermissions(PERMISSIONS, REQUEST_PERMISSIONS_CODE);
         }
     }

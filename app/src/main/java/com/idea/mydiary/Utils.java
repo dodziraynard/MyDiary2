@@ -56,13 +56,13 @@ public class Utils {
             destFile.createNewFile();
         }
 
-        try (
-                FileChannel source = new FileInputStream(sourceFile).getChannel();
-                FileChannel destination = new FileOutputStream(destFile).getChannel()) {
-            destination.transferFrom(source, 0, source.size());
-        }
+        FileChannel source = new FileInputStream(sourceFile).getChannel();
+        FileChannel destination = new FileOutputStream(destFile).getChannel();
+        destination.transferFrom(source, 0, source.size());
     }
 
+    // Ensure that expensive tasks are not being run on the main
+    // main thread by displaying an alert while in DEBUG mode.
     public static void enableStrictModeAll() {
         if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
@@ -108,9 +108,11 @@ public class Utils {
 
     public static void hideKeyboard(Activity activity) {
         InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
-        //Find the currently focused view, so we can grab the correct window token from it.
+        //Find the currently focused view,
+        // so we can grab the correct window token from it.
         View view = activity.getCurrentFocus();
-        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        //If no view currently has focus, create a new one,
+        // just so we can grab a window token from it
         if (view == null) {
             view = new View(activity);
         }
@@ -118,7 +120,6 @@ public class Utils {
     }
 
     public static class AudioRecorder {
-
         final MediaRecorder recorder = new MediaRecorder();
         public final String fileName;
 
@@ -135,10 +136,11 @@ public class Utils {
 
             // make sure the directory we plan to store the recording in exists
             File directory = new File(fileName).getParentFile();
-            if (!directory.exists() && !directory.mkdirs()) {
+            if (directory == null || !directory.exists() && !directory.mkdirs()) {
                 throw new IOException("Path to file could not be created.");
             }
 
+            // File is found; play it.
             recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
@@ -161,13 +163,6 @@ public class Utils {
         public void stop() throws IOException {
             recorder.stop();
             recorder.release();
-        }
-
-        public static void playRecording(String path) throws IOException {
-            MediaPlayer mp = new MediaPlayer();
-            mp.setDataSource(path);
-            mp.prepare();
-            mp.start();
         }
     }
 

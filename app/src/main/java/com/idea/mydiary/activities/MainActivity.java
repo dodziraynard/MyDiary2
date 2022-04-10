@@ -1,5 +1,8 @@
 package com.idea.mydiary.activities;
 
+import static com.idea.mydiary.adapters.NotesAdapter.MENU_EDIT;
+import static com.idea.mydiary.adapters.NotesAdapter.MENU_EXPORT_PDF;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -45,13 +48,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bugfender.sdk.Bugfender;
 import com.bugfender.sdk.ui.FeedbackStyle;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.rewarded.RewardItem;
-import com.google.android.gms.ads.rewarded.RewardedAd;
-import com.google.android.gms.ads.rewarded.RewardedAdCallback;
-import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.google.android.gms.appinvite.AppInviteInvitation;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -105,9 +101,6 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
-import static com.idea.mydiary.adapters.NotesAdapter.MENU_EDIT;
-import static com.idea.mydiary.adapters.NotesAdapter.MENU_EXPORT_PDF;
-
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -139,7 +132,6 @@ public class MainActivity extends AppCompatActivity
     private SharedPreferences mSharedPreferences;
     private MainActivityViewModel mViewModel;
     private long itemToRemovePos = -1;
-    private RewardedAd rewardedAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,21 +142,6 @@ public class MainActivity extends AppCompatActivity
         handleDeepLink();
         setSupportActionBar(mToolbar);
         registerForContextMenu(mNotesRecyclerView);
-        MobileAds.initialize(this);
-
-        rewardedAd = new RewardedAd(this,
-                getString(R.string.reward_ad_unit_id));
-        RewardedAdLoadCallback adLoadCallback = new RewardedAdLoadCallback() {
-            @Override
-            public void onRewardedAdLoaded() {
-            }
-
-            @Override
-            public void onRewardedAdFailedToLoad(LoadAdError loadAdError) {
-                super.onRewardedAdFailedToLoad(loadAdError);
-            }
-        };
-        rewardedAd.loadAd(new AdRequest.Builder().build(), adLoadCallback);
 
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
         boolean isProtected = pref.getBoolean("protect", false);
@@ -173,12 +150,7 @@ public class MainActivity extends AppCompatActivity
             tryEncrypt();
         }
 
-        mFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, NewNoteActivity.class));
-            }
-        });
+        mFab.setOnClickListener(view -> startActivity(new Intent(MainActivity.this, NewNoteActivity.class)));
 
         // Navigation drawer
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -325,7 +297,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        showAd();
         super.onBackPressed();
     }
 
@@ -378,10 +349,9 @@ public class MainActivity extends AppCompatActivity
         File pdfFolder = new File(Environment.getExternalStorageDirectory().getAbsoluteFile().toString() + "/My Diary/PDF/");
         if (!pdfFolder.exists()) {
             pdfFolder.mkdirs();
-            Log.i("HRD", "Pdf Directory created");
         }
 
-        //Create time stamp
+        //Create timestamp
         Date date = new Date();
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(date);
         File pdfFile = new File(pdfFolder.getAbsoluteFile() + "/" + timeStamp + ".pdf");
@@ -389,15 +359,21 @@ public class MainActivity extends AppCompatActivity
         Document document = null;
 
         try {
+            boolean fileCreated = true;
             if (!pdfFile.exists()) {
-                pdfFile.createNewFile();
+                fileCreated = pdfFile.createNewFile();
             }
-            outputStream = new FileOutputStream(pdfFile);
-            PdfWriter writer = new PdfWriter(outputStream);
-            PdfDocument pdf = new PdfDocument(writer);
-            document = new Document(pdf);
+            if (fileCreated) {
+                outputStream = new FileOutputStream(pdfFile);
+                PdfWriter writer = new PdfWriter(outputStream);
+                PdfDocument pdf = new PdfDocument(writer);
+                document = new Document(pdf);
+            } else{
+                Log.d("HRD", "Can't create file." + pdfFile.getAbsolutePath());
+            }
+
         } catch (IOException e) {
-            Toast.makeText(this, "Can't save note", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(this, "Can't save note", Toast.LENGTH_SHORT).show();
             Log.d("HRD", e.getMessage() + " " + pdfFile.getAbsolutePath());
         }
 
@@ -558,7 +534,7 @@ public class MainActivity extends AppCompatActivity
                 CertificateException | UnrecoverableKeyException | IOException
                 | NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException e) {
 
-            Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content), R.string.string_set_lock_sreen, Snackbar.LENGTH_LONG);
+            Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content), R.string.string_set_lock_screen, Snackbar.LENGTH_LONG);
             snackbar.setActionTextColor(ContextCompat.getColor(this, R.color.colorAccent));
             snackbar.show();
             return false;
@@ -612,24 +588,9 @@ public class MainActivity extends AppCompatActivity
         if (permissionsDenied()) {
             Toast.makeText(this, "Perm Denied", Toast.LENGTH_LONG).show();
             ((ActivityManager) (this.getSystemService(ACTIVITY_SERVICE))).clearApplicationUserData();
-            Log.e("HRD", "Perm Denied");
             finish();
         } else {
             onResume();
-        }
-    }
-
-    private void showAd() {
-        if (rewardedAd.isLoaded()) {
-            Activity activityContext = MainActivity.this;
-            RewardedAdCallback adCallback = new RewardedAdCallback() {
-
-                @Override
-                public void onUserEarnedReward(@NonNull RewardItem rewardItem) {
-                    Toast.makeText(activityContext, "Congratulation !", Toast.LENGTH_SHORT).show();
-                }
-            };
-            rewardedAd.show(activityContext, adCallback);
         }
     }
 

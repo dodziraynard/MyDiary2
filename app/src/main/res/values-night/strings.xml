@@ -12,10 +12,8 @@
     <string name="menu_reminder">Reminder</string>
     <string name="menu_feedback">Feedback</string>
     <string name="menu_share">Share</string>
-    <string name="app_name_version">My Diary v1.0</string>
     <string name="string_options">Options</string>
     <string name="string_view">View</string>
     <string name="string_share">Share</string>
     <string name="string_delete">Delete</string>
-
 </resources>
