@@ -1,5 +1,7 @@
 package com.idea.mydiary.activities;
 
+import static com.idea.mydiary.activities.MainActivity.SELECTED_NOTE_ID;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -27,15 +29,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.flask.colorpicker.ColorPickerView;
-import com.flask.colorpicker.OnColorSelectedListener;
-import com.flask.colorpicker.builder.ColorPickerClickListener;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 import com.idea.mydiary.R;
 import com.idea.mydiary.customviews.PaintView;
 
 import java.lang.ref.WeakReference;
-
-import static com.idea.mydiary.activities.MainActivity.SELECTED_NOTE_ID;
 
 public class PaintActivity extends AppCompatActivity {
     public static final String PAINTING_URL = "PAINTING_URL";
@@ -43,7 +41,6 @@ public class PaintActivity extends AppCompatActivity {
     private ImageButton mChangeBackgroundColorBtn;
     private ImageButton mChangePencilColorBtn;
     private ImageButton mEraserActiveBtn;
-    private SeekBar mSeekBar;
     private TextView mSeekBarValue;
     private ImageButton mChangeBrushSizeBtn;
     private long mNoteId;
@@ -67,8 +64,6 @@ public class PaintActivity extends AppCompatActivity {
         initViews();
 
         mNoteId = getIntent().getLongExtra(SELECTED_NOTE_ID, -1L);
-        // Log.d("HRD", String.valueOf(mNoteId));
-
         mChangeBackgroundColorBtn.setOnClickListener(changeBackgroundListener);
         mChangePencilColorBtn.setOnClickListener(changePencilColorListener);
         mEraserActiveBtn.setOnClickListener(activateEraserListener);
@@ -107,28 +102,19 @@ public class PaintActivity extends AppCompatActivity {
         }
     };
 
-    View.OnClickListener changeBrushSizeListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            displayChangeBrushSizeDialog();
-            deactivateEraser();
-        }
+    View.OnClickListener changeBrushSizeListener = v -> {
+        displayChangeBrushSizeDialog();
+        deactivateEraser();
     };
 
-    View.OnClickListener changeBackgroundListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            changePaintViewBackgroundColor();
-            deactivateEraser();
-        }
+    View.OnClickListener changeBackgroundListener = v -> {
+        changePaintViewBackgroundColor();
+        deactivateEraser();
     };
 
-    View.OnClickListener changePencilColorListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            changePaintViewPencilColor();
-            deactivateEraser();
-        }
+    View.OnClickListener changePencilColorListener = v -> {
+        changePaintViewPencilColor();
+        deactivateEraser();
     };
 
     View.OnClickListener activateEraserListener = new View.OnClickListener() {
@@ -179,11 +165,6 @@ public class PaintActivity extends AppCompatActivity {
     }
 
     private void saveCanvas() {
-//        String url = mPaintView.saveCanvasAsPNG();
-//        if(!url.isEmpty())
-//            Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show();
-//
-//        setActivityResult(url);
         new SaveCanvasAsyncTask(this).execute(mPaintView);
     }
 
@@ -209,22 +190,9 @@ public class PaintActivity extends AppCompatActivity {
                 .setTitle(getString(R.string.string_choose_color))
                 .wheelType(ColorPickerView.WHEEL_TYPE.FLOWER)
                 .density(12)
-                .setOnColorSelectedListener(new OnColorSelectedListener() {
-                    @Override
-                    public void onColorSelected(int selectedColor) {
-                        mPaintView.setBackgroundColor("#" + Integer.toHexString(selectedColor));
-                    }
-                })
-                .setPositiveButton(getString(R.string.string_yes), new ColorPickerClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int selectedColor, Integer[] allColors) {
-                        mPaintView.setBackgroundColor("#" + Integer.toHexString(selectedColor));
-                    }
-                })
-                .setNegativeButton(getString(R.string.string_cancel), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
+                .setOnColorSelectedListener(selectedColor -> mPaintView.setBackgroundColor("#" + Integer.toHexString(selectedColor)))
+                .setPositiveButton(getString(R.string.string_yes), (dialog, selectedColor, allColors) -> mPaintView.setBackgroundColor("#" + Integer.toHexString(selectedColor)))
+                .setNegativeButton(getString(R.string.string_cancel), (dialog, which) -> {
                 })
                 .build()
                 .show();
@@ -237,22 +205,9 @@ public class PaintActivity extends AppCompatActivity {
                 .wheelType(ColorPickerView.WHEEL_TYPE.FLOWER)
                 .density(12)
                 .initialColor(mPaintView.getBrushColor())
-                .setOnColorSelectedListener(new OnColorSelectedListener() {
-                    @Override
-                    public void onColorSelected(int selectedColor) {
-                        mPaintView.setPencilColor("#" + Integer.toHexString(selectedColor));
-                    }
-                })
-                .setPositiveButton(getString(R.string.string_ok), new ColorPickerClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int selectedColor, Integer[] allColors) {
-                        mPaintView.setPencilColor("#" + Integer.toHexString(selectedColor));
-                    }
-                })
-                .setNegativeButton(getString(R.string.string_cancel), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
+                .setOnColorSelectedListener(selectedColor -> mPaintView.setPencilColor("#" + Integer.toHexString(selectedColor)))
+                .setPositiveButton(getString(R.string.string_ok), (dialog, selectedColor, allColors) -> mPaintView.setPencilColor("#" + Integer.toHexString(selectedColor)))
+                .setNegativeButton(getString(R.string.string_cancel), (dialog, which) -> {
                 })
                 .build()
                 .show();
@@ -260,7 +215,7 @@ public class PaintActivity extends AppCompatActivity {
 
     public void displayChangeBrushSizeDialog() {
         View customLayout = LayoutInflater.from(this).inflate(R.layout.slider_dialog, null);
-        mSeekBar = customLayout.findViewById(R.id.seekBar);
+        SeekBar mSeekBar = customLayout.findViewById(R.id.seekBar);
         mSeekBarValue = customLayout.findViewById(R.id.textViewSeekValue);
         mSeekBar.setOnSeekBarChangeListener(mOnSeekBarChangeListener);
         mSeekBar.setProgress((int) mPaintView.getBrushSize());
@@ -277,11 +232,7 @@ public class PaintActivity extends AppCompatActivity {
         new AlertDialog.Builder(this, R.style.DialogTheme)
                 .setTitle(R.string.string_clear_canvas)
                 .setMessage(R.string.string_clear_canvas_confirm)
-                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        mPaintView.clear();
-                    }
-                })
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> mPaintView.clear())
                 .setNegativeButton(android.R.string.no, null)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
@@ -315,7 +266,7 @@ public class PaintActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && permissionsDenied()) {
+        if (permissionsDenied()) {
             requestPermissions(PERMISSIONS, REQUEST_PERMISSIONS_CODE);
         }
     }

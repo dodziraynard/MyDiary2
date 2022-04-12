@@ -32,11 +32,16 @@ public class PaintView extends View {
     public static float BRUSH_SIZE = 5f;
     public int mDefaultColor = Color.BLACK;
     public static final int DEFAULT_BG_COLOR = Color.WHITE;
+
+    // Number of pixels (distance) to skip before drawing.
     private static final float TOUCH_TOLERANCE = 4;
+
+    // Where to draw path
     private float mX, mY;
+
     private Path mPath;
     private Paint mPaint;
-    private ArrayList<FingerPath> paths = new ArrayList<>();
+    private final ArrayList<FingerPath> paths = new ArrayList<>();
     private int currentColor;
     private int backgroundColor = DEFAULT_BG_COLOR;
     private float strokeWidth;
@@ -47,25 +52,25 @@ public class PaintView extends View {
     private Bitmap mBitmap;
     private Canvas mCanvas;
     private int mSelectedColor;
-    private Paint mBitmapPaint = new Paint(Paint.DITHER_FLAG);
+    private final Paint mBitmapPaint = new Paint(Paint.DITHER_FLAG);
     public static File APP_FOLDER;
 
     public PaintView(Context context) {
         super(context);
-        init(context, null, 0);
+        init(context);
     }
 
     public PaintView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context, attrs, 0);
+        init(context);
     }
 
     public PaintView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        init(context, attrs, defStyle);
+        init(context);
     }
 
-    private void init(Context context, AttributeSet attrs, int defStyle) {
+    private void init(Context context) {
         mDefaultColor = context.getColor(R.color.colorAccent);
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
@@ -87,7 +92,10 @@ public class PaintView extends View {
         int height = metrics.heightPixels;
         int width = metrics.widthPixels;
 
+        // A bitmap to contain the drawing.
         mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+        // Link the bitmap to the canvas.
         mCanvas = new Canvas(mBitmap);
 
         currentColor = mDefaultColor;
@@ -103,7 +111,7 @@ public class PaintView extends View {
 
         String filename = time + ".png";
         File f = new File(folder, filename);
-        OutputStream stream = null;
+        OutputStream stream;
 
         try {
             f.createNewFile();
@@ -111,7 +119,6 @@ public class PaintView extends View {
             mBitmap.compress(Bitmap.CompressFormat.PNG, 80, stream);
             stream.close();
         } catch (IOException e) {
-            Log.d("HRD", "IOExcepion");
             e.printStackTrace();
         }
 
@@ -137,6 +144,8 @@ public class PaintView extends View {
         currentColor = mDefaultColor;
         paths.clear();
         normal();
+
+        // Force redraw the view
         invalidate();
     }
 
@@ -184,7 +193,6 @@ public class PaintView extends View {
             mCanvas.drawPath(fp.path, mPaint);
 
         }
-
         canvas.drawBitmap(mBitmap, 0, 0, mBitmapPaint);
         canvas.restore();
     }
@@ -234,7 +242,6 @@ public class PaintView extends View {
                 invalidate();
                 break;
         }
-
         return true;
     }
 

@@ -11,10 +11,8 @@ import java.util.List;
 
 public class DataManager {
     public static final String[] IMAGE_EXTENSIONS = new String[]{"png", "jpg", "jpeg"};
-    public static final String[] AUDIO_EXTENSIONS = new String[]{"mp3", "wave"};
     private static DataManager ourInstance = null;
-    private List<Note> mNotes = new ArrayList<>();
-    private List<Media> mMediaList;
+    private final List<Note> mNotes = new ArrayList<>();
 
     public static DataManager getInstance() {
         if (ourInstance == null) {
@@ -27,8 +25,8 @@ public class DataManager {
     private void initializeExampleNotes() {
         for (int i = 1; i <= 20; i++) {
             String title = "Note " + i;
-            String text = "Some really realy long text as the content of the note";
-            Note note = new Note(title, 1322018752992l, text);
+            String text = "Some really really long text as the content of the note";
+            Note note = new Note(title, 1322018752992L, text);
             note.setId(i);
             mNotes.add(note);
         }
@@ -47,7 +45,7 @@ public class DataManager {
     }
 
     public List<Media> getMediaList(Note note) {
-        mMediaList = new ArrayList<>();
+        List<Media> mMediaList = new ArrayList<>();
         long noteId = note.getId();
 
         File folder = new File(
@@ -73,15 +71,13 @@ public class DataManager {
                         mMediaList.add(media);
                     }
                 } catch (NumberFormatException e) {
-                    // Images are saved using the format NOTEID_TIMEINMILL.png
+                    // Images are saved using the format NOTEID_TIMEINMILLS.png
                     // So if the name can't be split using '_' as a deliminator,
                     // then it is not saved by the application
                     e.printStackTrace();
                 }
-
             }
         }
-
         return mMediaList;
     }
 }

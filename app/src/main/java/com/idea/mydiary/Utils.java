@@ -30,17 +30,10 @@ public class Utils {
                 context.getFilesDir().toString() + "/MyDiary");
     }
 
-    public static <T> boolean contains(final T[] array, final T v) {
-        if (v == null) {
-            for (final T e : array)
-                if (e == null)
-                    return true;
-        } else {
-            for (final T e : array)
-                if (e == v || v.equals(e))
-                    return true;
-        }
-
+    public static <T> boolean contains(final T[] array, final T t) {
+        for (final T e : array)
+            if (e == t || t.equals(e))
+                return true;
         return false;
     }
 
@@ -49,7 +42,7 @@ public class Utils {
     }
 
     public static void copyFile(File sourceFile, File destFile) throws IOException {
-        if (!destFile.getParentFile().exists())
+        if (destFile.getParentFile() != null && !destFile.getParentFile().exists())
             destFile.getParentFile().mkdirs();
 
         if (!destFile.exists()) {
@@ -62,7 +55,7 @@ public class Utils {
     }
 
     // Ensure that expensive tasks are not being run on the main
-    // main thread by displaying an alert while in DEBUG mode.
+    // thread by displaying an alert while in DEBUG mode.
     public static void enableStrictModeAll() {
         if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
@@ -102,21 +95,23 @@ public class Utils {
             sb.append('0');
         }
         sb.append(inputString);
-
         return sb.toString();
     }
 
+
+    /* Source: https://stackoverflow.com/questions/47260845/call-function-from-activity-to-close-the-soft-keyboard-android/47264942
+     */
     public static void hideKeyboard(Activity activity) {
-        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
-        //Find the currently focused view,
+        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        // Find the currently focused view,
         // so we can grab the correct window token from it.
         View view = activity.getCurrentFocus();
-        //If no view currently has focus, create a new one,
+        // If no view currently has focus, create a new one,
         // just so we can grab a window token from it
         if (view == null) {
             view = new View(activity);
         }
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     public static class AudioRecorder {

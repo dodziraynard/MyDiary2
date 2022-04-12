@@ -33,6 +33,7 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
     private MediaPlayer mMediaPlayer;
     private AudioManager mAudioManager;
     private String mAudioFile;
+    private int resumePosition = 0;
 
     //Handle incoming phone calls
     private boolean ongoingCall = false;
@@ -67,8 +68,6 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
             mMediaPlayer.prepareAsync();
         }
     }
-
-    private int resumePosition = 0;
 
     private void playMedia() {
         if (!mMediaPlayer.isPlaying()) {
@@ -114,20 +113,11 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
     }
 
-    private boolean removeAudioFocus() {
-        return AudioManager.AUDIOFOCUS_REQUEST_GRANTED ==
-                mAudioManager.abandonAudioFocus(this);
+    private void removeAudioFocus() {
+        mAudioManager.abandonAudioFocus(this);
     }
 
-    private BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //pause audio on ACTION_AUDIO_BECOMING_NOISY
-            pauseMedia();
-        }
-    };
-
-    private BroadcastReceiver playNewAudio = new BroadcastReceiver() {
+    private final BroadcastReceiver playNewAudio = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             mAudioFile = intent.getStringExtra(AUDIO_URI);
@@ -141,30 +131,36 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
         }
     };
 
-    // Pause audio
-    private BroadcastReceiver pauseAudio = new BroadcastReceiver() {
+    // Pause audio on ACTION_AUDIO_BECOMING_NOISY
+    private final BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             pauseMedia();
         }
     };
 
-    private BroadcastReceiver stopAudio = new BroadcastReceiver() {
+    private final BroadcastReceiver pauseAudio = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            pauseMedia();
+        }
+    };
+
+    private final BroadcastReceiver stopAudio = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             stopMedia();
         }
     };
 
-    // Resume audio
-    private BroadcastReceiver resumeAudio = new BroadcastReceiver() {
+    private final BroadcastReceiver resumeAudio = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             resumeMedia();
         }
     };
 
-    private BroadcastReceiver seekAudio = new BroadcastReceiver() {
+    private final BroadcastReceiver seekAudio = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int position = intent.getIntExtra(SEEK_POSITION, -1);
@@ -174,7 +170,7 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
     };
 
     private void registerBroadCastReceivers() {
-        IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        IntentFilter filterBecomingNoisy = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         IntentFilter filterPlay = new IntentFilter(NewNoteActivity.Broadcast_PLAY_NEW_AUDIO);
         IntentFilter filterPause = new IntentFilter(NewNoteActivity.Broadcast_PAUSE_AUDIO);
         IntentFilter filterResume = new IntentFilter(NewNoteActivity.Broadcast_RESUME_AUDIO);
@@ -186,7 +182,7 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
         registerReceiver(pauseAudio, filterPause);
         registerReceiver(seekAudio, filterSeek);
         registerReceiver(stopAudio, filterStop);
-        registerReceiver(becomingNoisyReceiver, intentFilter);
+        registerReceiver(becomingNoisyReceiver, filterBecomingNoisy);
     }
 
     //Handle incoming phone calls
@@ -198,8 +194,8 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
             @Override
             public void onCallStateChanged(int state, String incomingNumber) {
                 switch (state) {
-                    //if at least one call exists or the phone is ringing
-                    //pause the MediaPlayer
+                    // if at least one call exists or the phone is ringing
+                    // pause the MediaPlayer
                     case TelephonyManager.CALL_STATE_OFFHOOK:
                     case TelephonyManager.CALL_STATE_RINGING:
                         if (mMediaPlayer != null) {
@@ -238,14 +234,12 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
         while (mMediaPlayer != null) {
             try {
                 int pos = mMediaPlayer.getCurrentPosition() / 1000 + 1;
-
                 if (mMediaPlayer.isPlaying()) {
                     sendMediaPositionToActivity(pos);
                 }
             } catch (IllegalStateException e) {
                 e.printStackTrace();
             }
-
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -275,6 +269,7 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
+        // @TODO
         //Invoked when there has been an error during an asynchronous operation.
         switch (what) {
             case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
@@ -314,7 +309,6 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        mAudioFile = intent.getStringExtra(AUDIO_URI);
         // Intent for sending message to the activity
         mSendMessageIntent = new Intent();
         mSendMessageIntent.setAction(MEDIA_SERVICE_INFO);
@@ -343,7 +337,7 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
             telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
         }
 
-        //unregister BroadcastReceivers
+        // Unregister BroadcastReceivers
         unregisterReceiver(becomingNoisyReceiver);
         unregisterReceiver(playNewAudio);
         unregisterReceiver(resumeAudio);

@@ -56,8 +56,10 @@ import static com.idea.mydiary.services.MediaService.MEDIA_POSITION;
 import static com.idea.mydiary.services.MediaService.PLAYER_STATE;
 
 public class NoteViewActivity extends AppCompatActivity {
-    ActivityNoteViewBinding binding;
-    private NoteViewActivityViewModel mViewModel;
+    private boolean mPlayerStopped = true;
+    private boolean mPlayerPaused = false;
+    private boolean serviceBound = false;
+    boolean mReceiverRegistered = false;
     private Note mNote;
     private List<Media> mMediaList;
     private MediaAdapter mAdapter;
@@ -66,13 +68,10 @@ public class NoteViewActivity extends AppCompatActivity {
     private TextView mTextViewDuration;
     private ImageView mPlayerPlayPause;
     private SeekBar mPlayerSeekBar;
-    private boolean mPlayerStopped = true;
-    private boolean mPlayerPaused = false;
-    private boolean serviceBound = false;
     private MediaService mMediaService;
-    boolean mReceiverRegistered = false;
     private NoteViewActivity.MediaReceiver receiver;
     private TextView mNoteTextView;
+    private ActivityNoteViewBinding binding;
 
 
     @Override
@@ -80,36 +79,32 @@ public class NoteViewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null)
             restoreSavedState(savedInstanceState);
-
         binding = DataBindingUtil.setContentView(this, R.layout.activity_note_view);
         setSupportActionBar(binding.toolbar);
-        if (getSupportActionBar() != null)
+
+        if (getSupportActionBar() != null){
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
         init();
 
-        mViewModel = new ViewModelProvider(this).get(NoteViewActivityViewModel.class);
+        NoteViewActivityViewModel mViewModel = new ViewModelProvider(this).get(NoteViewActivityViewModel.class);
 
         Intent intent = getIntent();
         long selectedNoteId = intent.getLongExtra(SELECTED_NOTE_ID, -1);
         if (selectedNoteId != -1) {
-            mViewModel.getNote(selectedNoteId).observe(this, new Observer<Note>() {
-                @Override
-                public void onChanged(Note note) {
-                    mNote = note;
-                    TextView date = findViewById(R.id.textViewDate);
-                    mNoteTextView.setText(mNote.getText());
-                    date.setText(mNote.getFullDate());
-                    binding.toolbarLayout.setTitle(mNote.getTitle());
-                }
+            mViewModel.getNote(selectedNoteId).observe(this, note -> {
+                mNote = note;
+                TextView date = findViewById(R.id.textViewDate);
+                mNoteTextView.setText(mNote.getText());
+                date.setText(mNote.getFullDate());
+                binding.toolbarLayout.setTitle(mNote.getTitle());
             });
         }
 
-        mViewModel.getNoteMedia(selectedNoteId).observe(this, new Observer<List<Media>>() {
-            @Override
-            public void onChanged(List<Media> mediaList) {
-                mMediaList = mediaList;
-                mAdapter.setMediaList(mMediaList);
-            }
+        mViewModel.getNoteMedia(selectedNoteId).observe(this, mediaList -> {
+            mMediaList = mediaList;
+            mAdapter.setMediaList(mMediaList);
         });
 
         binding.fab.setOnClickListener(view -> {
@@ -118,6 +113,7 @@ public class NoteViewActivity extends AppCompatActivity {
             startActivity(i);
         });
 
+        // Retrieve preferred font size from shared preference.
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
         String fontSizeString = pref.getString("fontSize", "14");
         float fontSize = Float.parseFloat(fontSizeString);
@@ -201,13 +197,10 @@ public class NoteViewActivity extends AppCompatActivity {
         mPlayerPlayPause.setOnClickListener(v -> {
             if (mPlayerPaused) {
                 resumeMedia();
-                Log.d("HRD", "RESUME");
             } else if (mPlayerStopped) {
                 playMedia(mSelectedMedia.getUrl());
-                Log.d("HRD", "playMedia " + mSelectedMedia.getUrl());
             } else {
                 pauseMedia();
-                Log.d("HRD", "pauseMedia");
             }
         });
 
@@ -217,7 +210,7 @@ public class NoteViewActivity extends AppCompatActivity {
         mPlayerDialog.show();
     }
 
-
+    // Play audio in the background using services.
     private void playMedia(String uri) {
         if (!serviceBound) {
             Intent playerIntent = new Intent(this, MediaService.class);
@@ -231,9 +224,10 @@ public class NoteViewActivity extends AppCompatActivity {
         }
     }
 
+    // Communications with the media service.
+
     private void resumeMedia() {
-        Intent broadcastIntent = new Intent(Broadcast_RESUME_AUDIO);
-        sendBroadcast(broadcastIntent);
+        sendBroadcast(new Intent(Broadcast_RESUME_AUDIO));
     }
 
     private void seekMediaTo(int pos) {
@@ -243,13 +237,11 @@ public class NoteViewActivity extends AppCompatActivity {
     }
 
     private void pauseMedia() {
-        Intent broadcastIntent = new Intent(Broadcast_PAUSE_AUDIO);
-        sendBroadcast(broadcastIntent);
+        sendBroadcast(new Intent(Broadcast_PAUSE_AUDIO));
     }
 
     private void stopMedia() {
-        Intent broadcastIntent = new Intent(Broadcast_STOP_AUDIO);
-        sendBroadcast(broadcastIntent);
+        sendBroadcast(new Intent(Broadcast_STOP_AUDIO));
     }
 
     @Override
@@ -295,14 +287,14 @@ public class NoteViewActivity extends AppCompatActivity {
         mReceiverRegistered = true;
     }
 
-    private ServiceConnection serviceConnection = new ServiceConnection() {
+    // Service connection to the background audio player service.
+    private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             MediaService.LocalBinder binder = (MediaService.LocalBinder) service;
             mMediaService = binder.getService();
             serviceBound = true;
-            Log.d("HRD", "Service registered");
         }
 
         @Override
@@ -314,7 +306,6 @@ public class NoteViewActivity extends AppCompatActivity {
     class MediaReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d("HRD", "RECEIVE");
             if (Objects.equals(intent.getAction(), MEDIA_SERVICE_INFO) && mPlayerPlayPause != null) {
                 String playerState = intent.getStringExtra(PLAYER_STATE);
                 int duration = intent.getIntExtra(MEDIA_DURATION, 0);
