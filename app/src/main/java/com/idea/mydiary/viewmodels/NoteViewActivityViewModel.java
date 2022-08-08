@@ -14,7 +14,7 @@ import java.util.List;
 
 public class NoteViewActivityViewModel extends AndroidViewModel {
 
-    private MyDiaryRepository mRepository;
+    private final MyDiaryRepository mRepository;
 
     public NoteViewActivityViewModel(@NonNull Application application) {
         super(application);

@@ -10,7 +10,7 @@ import com.idea.mydiary.models.Media;
 import com.idea.mydiary.repositories.MyDiaryRepository;
 
 public class ImageViewActivityViewModel extends AndroidViewModel {
-    private MyDiaryRepository mRepository;
+    private final MyDiaryRepository mRepository;
 
     public ImageViewActivityViewModel(@NonNull Application application) {
         super(application);

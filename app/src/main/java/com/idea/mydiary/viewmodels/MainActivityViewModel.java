@@ -15,9 +15,9 @@ import java.util.List;
 
 public class MainActivityViewModel extends AndroidViewModel {
 
-    private MyDiaryRepository mRepository;
-    private LiveData<List<Note>> mNotes;
-    private List<Media> mMediaList;
+    private final MyDiaryRepository mRepository;
+    private final LiveData<List<Note>> mNotes;
+    private final List<Media> mMediaList;
 
     public MainActivityViewModel(@NonNull Application application) {
         super(application);

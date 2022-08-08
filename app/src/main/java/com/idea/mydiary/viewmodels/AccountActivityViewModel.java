@@ -14,9 +14,9 @@ import com.idea.mydiary.repositories.MyDiaryRepository;
 import java.util.List;
 
 public class AccountActivityViewModel extends AndroidViewModel {
-    private MyDiaryRepository mRepository;
+    private final MyDiaryRepository mRepository;
 
-    private MutableLiveData<Boolean> isProcessing = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> isProcessing = new MutableLiveData<>();
 
 
     public AccountActivityViewModel(@NonNull Application application) {

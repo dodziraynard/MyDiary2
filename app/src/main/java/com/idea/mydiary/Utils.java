@@ -3,10 +3,10 @@ package com.idea.mydiary;
 import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
-import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.view.View;
@@ -14,7 +14,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
-import androidx.databinding.library.baseAdapters.BuildConfig;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,8 +25,7 @@ public class Utils {
     private final File APP_FOLDER;
 
     public Utils(Context context) {
-        APP_FOLDER = new File(
-                context.getFilesDir().toString() + "/MyDiary");
+        APP_FOLDER = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "/MyDiary");
     }
 
     public static <T> boolean contains(final T[] array, final T t) {
@@ -68,8 +66,8 @@ public class Utils {
         }
     }
 
-    public static boolean deleteMyFile(Context context, String url) {
-        File file = new File(url);
+    public static boolean deleteMyFile(Context context, String path) {
+        File file = new File(path);
         boolean deleted = file.delete();
         if (deleted) return true;
         if (file.exists()) {
@@ -80,7 +78,8 @@ public class Utils {
                 e.printStackTrace();
             }
             if (file.exists()) {
-                context.deleteFile(file.getName());
+                // The file is a private file associated with the context.
+                return context.deleteFile(file.getName());
             }
         }
         return false;
@@ -99,7 +98,8 @@ public class Utils {
     }
 
 
-    /* Source: https://stackoverflow.com/questions/47260845/call-function-from-activity-to-close-the-soft-keyboard-android/47264942
+    /*
+        Source: https://stackoverflow.com/questions/47260845/call-function-from-activity-to-close-the-soft-keyboard-android/47264942
      */
     public static void hideKeyboard(Activity activity) {
         InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
@@ -135,7 +135,7 @@ public class Utils {
                 throw new IOException("Path to file could not be created.");
             }
 
-            // File is found; play it.
+            // File is found, record audio
             recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
@@ -172,7 +172,7 @@ public class Utils {
         Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null);
         if (cursor != null) {
             int column_index = cursor
-                    .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                    .getColumnIndex(MediaStore.Images.Media.DATA);
             cursor.moveToFirst();
             String path = cursor.getString(column_index);
             cursor.close();

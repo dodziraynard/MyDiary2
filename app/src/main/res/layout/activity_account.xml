@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/cardBackground"
     android:padding="0dp"
-    tools:context=".activities.AccountActivity">
+    tools:context=".views.AccountActivity">
 
     <Button
         android:id="@+id/button_login"

@@ -1,5 +1,8 @@
 package com.idea.mydiary.models;
 
+import static com.idea.mydiary.types.MediaType.AUDIO;
+import static com.idea.mydiary.types.MediaType.IMAGE;
+
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
@@ -8,9 +11,6 @@ import androidx.room.PrimaryKey;
 import com.idea.mydiary.types.MediaType;
 
 import java.util.Calendar;
-
-import static com.idea.mydiary.types.MediaType.AUDIO;
-import static com.idea.mydiary.types.MediaType.IMAGE;
 
 @Entity(tableName = Media.MEDIA_TABLE)
 public class Media {
@@ -28,7 +28,7 @@ public class Media {
         this.id = id;
     }
 
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
     private long id;
 
     public void setMediaType(String mediaType) {

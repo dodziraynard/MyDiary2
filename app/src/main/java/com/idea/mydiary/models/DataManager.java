@@ -15,7 +15,7 @@ public class DataManager {
     private final List<Note> mNotes = new ArrayList<>();
 
     public static DataManager getInstance() {
-        if (ourInstance == null) {
+         if (ourInstance == null) {
             ourInstance = new DataManager();
             ourInstance.initializeExampleNotes();
         }

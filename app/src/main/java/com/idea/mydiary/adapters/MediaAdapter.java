@@ -33,7 +33,6 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.ViewHolder> 
 
     public interface OnItemClickListener {
         void onImageButtonClickListener(Media media);
-
         void onAudioButtonClickListener(Media media);
     }
 
@@ -77,16 +76,13 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.ViewHolder> 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             mImageButton = itemView.findViewById(R.id.imageButton);
-            mImageButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mMedia = mMediaList.get(getLayoutPosition());
-                    if (listener != null) {
-                        if (mMedia.getMediaTypeEnum() == MediaType.IMAGE) {
-                            listener.onImageButtonClickListener(mMedia);
-                        } else {
-                            listener.onAudioButtonClickListener(mMedia);
-                        }
+            mImageButton.setOnClickListener(v -> {
+                mMedia = mMediaList.get(getLayoutPosition());
+                if (listener != null) {
+                    if (mMedia.getMediaTypeEnum() == MediaType.IMAGE) {
+                        listener.onImageButtonClickListener(mMedia);
+                    } else {
+                        listener.onAudioButtonClickListener(mMedia);
                     }
                 }
             });

@@ -25,9 +25,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-/**
- * Presents a painting area where objects can be drawn.
- */
 public class PaintView extends View {
     public static float BRUSH_SIZE = 5f;
     public int mDefaultColor = Color.BLACK;
@@ -38,7 +35,6 @@ public class PaintView extends View {
 
     // Where to draw path
     private float mX, mY;
-
     private Path mPath;
     private Paint mPaint;
     private final ArrayList<FingerPath> paths = new ArrayList<>();
@@ -71,7 +67,7 @@ public class PaintView extends View {
     }
 
     private void init(Context context) {
-        mDefaultColor = context.getColor(R.color.colorAccent);
+        mDefaultColor = context.getColor(android.R.color.black);
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
         mPaint.setDither(true);
@@ -79,7 +75,6 @@ public class PaintView extends View {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
-        mPaint.setXfermode(null);
         mPaint.setAlpha(0xff);
         mSelectedColor = mDefaultColor;
 
@@ -88,7 +83,7 @@ public class PaintView extends View {
         APP_FOLDER = new Utils(context).getAppFolder();
     }
 
-    public void init(DisplayMetrics metrics) {
+    public void initMetrics(DisplayMetrics metrics) {
         int height = metrics.heightPixels;
         int width = metrics.widthPixels;
 
@@ -121,7 +116,6 @@ public class PaintView extends View {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return f.getAbsolutePath();
     }
 
@@ -179,20 +173,20 @@ public class PaintView extends View {
         super.onDraw(canvas);
         canvas.save();
         mCanvas.drawColor(backgroundColor);
-
         for (FingerPath fp : paths) {
             mPaint.setColor(fp.color);
             mPaint.setStrokeWidth(fp.strokeWidth);
             mPaint.setMaskFilter(null);
 
-            if (fp.emboss)
+            if (fp.emboss) {
                 mPaint.setMaskFilter(mEmboss);
-            else if (fp.blur)
+            }
+            else if (fp.blur) {
                 mPaint.setMaskFilter(mBlur);
-
+            }
             mCanvas.drawPath(fp.path, mPaint);
-
         }
+        // Draw the bitmap on
         canvas.drawBitmap(mBitmap, 0, 0, mBitmapPaint);
         canvas.restore();
     }

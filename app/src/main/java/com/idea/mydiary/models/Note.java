@@ -28,7 +28,7 @@ public class Note {
     @Ignore
     private String mDateString;
 
-    @PrimaryKey()
+    @PrimaryKey(autoGenerate = true)
     private long id;
 
     private String title;

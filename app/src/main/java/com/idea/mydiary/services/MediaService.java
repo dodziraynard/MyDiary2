@@ -1,5 +1,9 @@
 package com.idea.mydiary.services;
 
+import static com.idea.mydiary.views.NewNoteActivity.AUDIO_URI;
+import static com.idea.mydiary.views.NewNoteActivity.MEDIA_SERVICE_INFO;
+import static com.idea.mydiary.views.NewNoteActivity.SEEK_POSITION;
+
 import android.app.IntentService;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -15,32 +19,30 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import com.idea.mydiary.activities.NewNoteActivity;
 import com.idea.mydiary.types.PlayerState;
+import com.idea.mydiary.views.NewNoteActivity;
 
 import java.io.IOException;
 
-import static com.idea.mydiary.activities.NewNoteActivity.AUDIO_URI;
-import static com.idea.mydiary.activities.NewNoteActivity.MEDIA_SERVICE_INFO;
-import static com.idea.mydiary.activities.NewNoteActivity.SEEK_POSITION;
 
-
-public class MediaService extends IntentService implements MediaPlayer.OnCompletionListener,
-        MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnSeekCompleteListener, AudioManager.OnAudioFocusChangeListener {
+public class MediaService extends IntentService implements
+        MediaPlayer.OnCompletionListener,
+        MediaPlayer.OnErrorListener,
+        MediaPlayer.OnPreparedListener,
+        MediaPlayer.OnSeekCompleteListener,
+        AudioManager.OnAudioFocusChangeListener {
     public static final String PLAYER_STATE = "PLAYER_STATE";
     public static final String MEDIA_DURATION = "MEDIA_DURATION";
     public static final String MEDIA_POSITION = "MEDIA_POSITION";
-    private MediaPlayer mMediaPlayer;
-    private AudioManager mAudioManager;
-    private String mAudioFile;
     private int resumePosition = 0;
-
     //Handle incoming phone calls
     private boolean ongoingCall = false;
     private PhoneStateListener phoneStateListener;
     private TelephonyManager telephonyManager;
-
     private Intent mSendMessageIntent;
+    private MediaPlayer mMediaPlayer;
+    private AudioManager mAudioManager;
+    private String mAudioFile;
 
     public MediaService() {
         super("MediaService");
@@ -53,11 +55,9 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
         mMediaPlayer.setOnErrorListener(this);
         mMediaPlayer.setOnPreparedListener(this);
         mMediaPlayer.setOnSeekCompleteListener(this);
-
         mMediaPlayer.reset();
 
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-
         if (mAudioFile != null && !mAudioFile.isEmpty()) {
             try {
                 mMediaPlayer.setDataSource(mAudioFile);
@@ -108,8 +108,6 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
         mAudioManager = (AudioManager) getSystemService(getApplication().AUDIO_SERVICE);
         int result = mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC,
                 AudioManager.AUDIOFOCUS_GAIN);
-
-        //Focus gained
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
     }
 
@@ -121,8 +119,8 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
         @Override
         public void onReceive(Context context, Intent intent) {
             mAudioFile = intent.getStringExtra(AUDIO_URI);
-            //A PLAY_NEW_AUDIO action received
-            //reset mediaPlayer to play the new Audio
+            // A PLAY_NEW_AUDIO action received
+            // Reset mediaPlayer to play the new Audio
             if (mMediaPlayer != null) {
                 stopMedia();
                 mMediaPlayer.reset();
@@ -204,7 +202,8 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
                         }
                         break;
                     case TelephonyManager.CALL_STATE_IDLE:
-                        // Phone idle. Start playing.
+                        // Phone idle
+                        // Start playing.
                         if (mMediaPlayer != null) {
                             if (ongoingCall) {
                                 ongoingCall = false;
@@ -269,7 +268,6 @@ public class MediaService extends IntentService implements MediaPlayer.OnComplet
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        // @TODO
         //Invoked when there has been an error during an asynchronous operation.
         switch (what) {
             case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:

@@ -1,7 +1,6 @@
 package com.idea.mydiary.viewmodels;
 
 import android.app.Application;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -14,20 +13,8 @@ import com.idea.mydiary.repositories.MyDiaryRepository;
 import java.util.List;
 
 public class NewNoteActivityViewModel extends AndroidViewModel {
-
-    private MyDiaryRepository mRepository;
-
+    private final MyDiaryRepository mRepository;
     private boolean isNewNote = false;
-
-    public void setCanShowAd(boolean canShowAd) {
-        this.canShowAd = canShowAd;
-    }
-
-    public boolean isCanShowAd() {
-        return canShowAd;
-    }
-
-    private boolean canShowAd = true;
     private long currentNoteId = -1;
 
     public NewNoteActivityViewModel(@NonNull Application application) {
@@ -69,7 +56,6 @@ public class NewNoteActivityViewModel extends AndroidViewModel {
 
     public void setCurrentNoteIsNew(boolean newNote) {
         isNewNote = newNote;
-        Log.d("HRD", String.valueOf(newNote));
     }
 
     public long getCurrentNoteId() {

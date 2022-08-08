@@ -21,19 +21,18 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.idea.mydiary.R;
-import com.idea.mydiary.activities.NoteViewActivity;
+import com.idea.mydiary.views.NoteViewActivity;
 import com.idea.mydiary.models.Note;
 
 import java.util.List;
 
-import static com.idea.mydiary.activities.MainActivity.SELECTED_NOTE_ID;
+import static com.idea.mydiary.views.MainActivity.SELECTED_NOTE_ID;
 
 public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>
         implements View.OnCreateContextMenuListener {
 
     public static final int MENU_EDIT = 0;
     public static final int MENU_EXPORT_PDF = 1;
-    public static final int MENU_DELETE = 2;
     private final Context mContext;
     private final LayoutInflater mLayoutInflater;
     private List<Note> mNotes;
@@ -57,7 +56,6 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>
     public void setOnNoteDeleteListener(OnDeleteListener listener) {
         this.listener = listener;
     }
-
 
     @NonNull
     @Override
@@ -99,8 +97,6 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>
         mNotes.remove(position);
         notifyItemRemoved(position);
         showUndoSnackbar();
-
-        Log.d("HRD", String.valueOf(position));
     }
 
     private void showUndoSnackbar() {
@@ -211,8 +207,8 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>
         }
 
         @Override
-        public void onChildDraw(Canvas c, RecyclerView recyclerView,
-                                RecyclerView.ViewHolder viewHolder,
+        public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
+                                @NonNull RecyclerView.ViewHolder viewHolder,
                                 float dX, float dY, int actionState, boolean isCurrentlyActive) {
             super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
 

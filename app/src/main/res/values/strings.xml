@@ -83,4 +83,13 @@
     <string name="an_area_to_paint_custom_objects">An area to paint custom objects.</string>
     <string name="tap_to_continue">Tap to continue.</string>
     <string name="tap_to_start">Tap to start.</string>
+    <string name="no_lock_screen_info">Please setup lock screen to protect your notes.</string>
+    <string name="protected_note_info">Please your notes are protected. Confirm your credentials to continue.</string>
+    <string name="protection_header">Protection is active</string>
+    <string name="feed">Feed</string>
+    <string name="complete_form">Kindly complete the form below.</string>
+    <string name="subject">Subject</string>
+    <string name="message">Message</string>
+    <string name="send">Send</string>
+    <string name="couldnt_generate_pdf">Sorry\, pdf generation failed.</string>
 </resources>
