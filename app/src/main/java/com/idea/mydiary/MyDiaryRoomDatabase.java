@@ -14,7 +14,7 @@ import com.idea.mydiary.models.Note;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Database(entities = {Note.class, Media.class}, version = 6, exportSchema = true)
+@Database(entities = {Note.class, Media.class}, version = 7, exportSchema = true)
 public abstract class MyDiaryRoomDatabase extends RoomDatabase {
 
     public static final String MY_DIARY_DATABASE = "my_diary_database";

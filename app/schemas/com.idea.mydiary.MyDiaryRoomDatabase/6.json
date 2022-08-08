@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 6,
-    "identityHash": "e9d4bd3ceb507302eeadcbeadc5a0c37",
+    "identityHash": "2d1c713a4a7c907eb0f855a9042f5798",
     "entities": [
       {
         "tableName": "note_table",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `title` TEXT, `text` TEXT, `account_id` TEXT, `date` INTEGER NOT NULL, `is_backed_up` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT, `text` TEXT, `account_id` TEXT, `date` INTEGER NOT NULL, `is_backed_up` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -49,14 +49,14 @@
           "columnNames": [
             "id"
           ],
-          "autoGenerate": false
+          "autoGenerate": true
         },
         "indices": [],
         "foreignKeys": []
       },
       {
         "tableName": "media_table",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `media_type` TEXT, `download_url` TEXT, `is_backed_up` INTEGER NOT NULL, `account_id` TEXT, `url` TEXT, `note_id` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `media_type` TEXT, `download_url` TEXT, `is_backed_up` INTEGER NOT NULL, `account_id` TEXT, `url` TEXT, `note_id` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -105,7 +105,7 @@
           "columnNames": [
             "id"
           ],
-          "autoGenerate": false
+          "autoGenerate": true
         },
         "indices": [],
         "foreignKeys": []
@@ -114,7 +114,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e9d4bd3ceb507302eeadcbeadc5a0c37')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2d1c713a4a7c907eb0f855a9042f5798')"
     ]
   }
 }
