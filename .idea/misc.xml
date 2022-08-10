@@ -9,6 +9,12 @@
         <entry key="app/src/main/res/layout/activity_paint.xml" value="0.3880208333333333" />
         <entry key="app/src/main/res/layout/content_scrolling.xml" value="0.19791666666666666" />
         <entry key="app/src/main/res/layout/slider_dialog.xml" value="0.2078125" />
+        <entry key="app/src/main/res/menu/activity_main_drawer.xml" value="0.3880208333333333" />
+        <entry key="app/src/main/res/menu/main.xml" value="0.3880208333333333" />
+        <entry key="app/src/main/res/menu/menu_new_note.xml" value="0.3880208333333333" />
+        <entry key="app/src/main/res/menu/menu_note_view.xml" value="0.3880208333333333" />
+        <entry key="app/src/main/res/menu/menu_paint.xml" value="0.3880208333333333" />
+        <entry key="app/src/main/res/xml/root_preferences.xml" value="0.3880208333333333" />
       </map>
     </option>
   </component>

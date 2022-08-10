@@ -110,12 +110,12 @@ public class MainActivity extends AppCompatActivity
         ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        permissionsDenied();
-
-        init();
-        handleDeepLink();
+        initView();
         setSupportActionBar(mToolbar);
         registerForContextMenu(mNotesRecyclerView);
+
+        // Check and handle firebase deep link
+        handleDeepLink();
 
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
         boolean isProtected = pref.getBoolean("protect", false);
@@ -154,6 +154,22 @@ public class MainActivity extends AppCompatActivity
         });
         mAdapter.setOnNoteDeleteListener(note -> mViewModel.deleteNote(note));
         updateLoggedInUserInfo();
+    }
+
+    private void initView() {
+        mViewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
+        mNavigationView = findViewById(R.id.nav_view);
+        mDrawer = findViewById(R.id.drawer_layout);
+        mFab = findViewById(R.id.fab);
+        mHeaderView = mNavigationView.getHeaderView(HEADER_VIEW_INDEX);
+        mToolbar = findViewById(R.id.toolbar);
+        mNotesRecyclerView = findViewById(R.id.notesRecyclerView);
+        mAdapter = new NotesAdapter(this, MainActivity.this);
+        mNotesRecyclerView.setAdapter(mAdapter);
+        mNotesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        ItemTouchHelper itemTouchHelper = new
+                ItemTouchHelper(new NotesAdapter.SwipeToDeleteCallback(mAdapter));
+        itemTouchHelper.attachToRecyclerView(mNotesRecyclerView);
     }
 
     private void updateLoggedInUserInfo() {
@@ -239,22 +255,6 @@ public class MainActivity extends AppCompatActivity
         }
         recreate();
         preferenceEditor.apply();
-    }
-
-    private void init() {
-        mViewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
-        mNavigationView = findViewById(R.id.nav_view);
-        mDrawer = findViewById(R.id.drawer_layout);
-        mFab = findViewById(R.id.fab);
-        mHeaderView = mNavigationView.getHeaderView(HEADER_VIEW_INDEX);
-        mToolbar = findViewById(R.id.toolbar);
-        mNotesRecyclerView = findViewById(R.id.notesRecyclerView);
-        mAdapter = new NotesAdapter(this, MainActivity.this);
-        mNotesRecyclerView.setAdapter(mAdapter);
-        mNotesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        ItemTouchHelper itemTouchHelper = new
-                ItemTouchHelper(new NotesAdapter.SwipeToDeleteCallback(mAdapter));
-        itemTouchHelper.attachToRecyclerView(mNotesRecyclerView);
     }
 
     @Override
